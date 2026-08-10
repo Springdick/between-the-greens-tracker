@@ -1,0 +1,2380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Between the Greens — SRPC Trap Tracker</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    :root {
+      --green-dark: #0f0f0f;
+      --green-mid: #b84a00;
+      --green-light: #e05c00;
+      --gold: #ff7a1a;
+      --gold-light: #ffd4a8;
+      --cream: #161616;
+      --white: #222222;
+      --gray-light: #2a2a2a;
+      --gray-mid: #484848;
+      --gray-dark: #999999;
+      --red: #e74c3c;
+      --text: #f0f0f0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Georgia', serif;
+      background: var(--green-dark);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    #root { min-height: 100vh; }
+
+    /* ─── HEADER ─── */
+    .app-header {
+      background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-mid) 100%);
+      border-bottom: 3px solid var(--gold);
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-badge {
+      width: 52px; height: 52px;
+      background: var(--gold);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
+    }
+
+    .header-text h1 {
+      color: var(--gold);
+      font-size: 1.6rem;
+      letter-spacing: 1px;
+    }
+
+    .header-text p {
+      color: var(--gray-mid);
+      font-size: 0.85rem;
+      font-style: italic;
+    }
+
+    .header-right {
+      margin-left: auto;
+      text-align: right;
+    }
+
+    .season-badge {
+      background: var(--gold);
+      color: var(--green-dark);
+      font-weight: bold;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 12px;
+      letter-spacing: 1px;
+    }
+
+    .admin-indicator {
+      color: var(--gold-light);
+      font-size: 0.75rem;
+      margin-top: 4px;
+    }
+
+    /* ─── NAV ─── */
+    .tab-nav {
+      background: var(--green-mid);
+      display: flex;
+      gap: 2px;
+      padding: 0 24px;
+      border-bottom: 2px solid var(--gold);
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--gray-mid);
+      padding: 12px 18px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover { color: var(--gold-light); }
+
+    .tab-btn.active {
+      color: var(--gold);
+      border-bottom-color: var(--gold);
+      font-weight: bold;
+    }
+
+    /* ─── MAIN CONTENT ─── */
+    .main-content {
+      background: var(--cream);
+      min-height: calc(100vh - 140px);
+      padding: 24px;
+    }
+
+    /* ─── STAT CARDS ─── */
+    .stat-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border: 1px solid var(--gray-mid);
+      border-top: 3px solid var(--green-light);
+      border-radius: 6px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--green-dark);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--gray-dark);
+      margin-top: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-sub {
+      font-size: 0.7rem;
+      color: var(--gray-dark);
+      font-style: italic;
+    }
+
+    /* ─── TABLES ─── */
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--white);
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    thead tr { background: var(--green-dark); }
+    thead th {
+      color: var(--gold);
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 0.8rem;
+      letter-spacing: 0.5px;
+      font-weight: normal;
+    }
+
+    tbody tr:nth-child(even) { background: var(--gray-light); }
+    tbody tr:hover { background: #e8f0e8; }
+
+    tbody td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--gray-mid);
+      font-size: 0.9rem;
+    }
+
+    .td-name { font-weight: bold; color: var(--green-dark); }
+    .td-center { text-align: center; }
+    .td-score { text-align: center; font-weight: bold; }
+    .td-good { color: var(--green-mid); }
+    .td-low { color: var(--red); }
+
+    /* ─── BADGES ─── */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+
+    .badge-a { background: #c8f0c8; color: #1a5a1a; }
+    .badge-b { background: #c8d8f0; color: #1a2a5a; }
+    .badge-win { background: #c8f0c8; color: #1a5a1a; }
+    .badge-loss { background: #f0c8c8; color: #5a1a1a; }
+    .badge-pending { background: var(--gray-mid); color: var(--gray-dark); }
+    .badge-absent { background: #f0e0c8; color: #5a3a1a; font-style: italic; }
+
+    /* ─── SECTION TITLES ─── */
+    .section-title {
+      font-size: 1.1rem;
+      color: var(--green-dark);
+      border-bottom: 2px solid var(--gold);
+      padding-bottom: 6px;
+      margin-bottom: 16px;
+      letter-spacing: 0.5px;
+    }
+
+    /* ─── ROSTER CARDS ─── */
+    .roster-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .roster-card {
+      background: var(--white);
+      border: 1px solid var(--gray-mid);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .roster-card-header {
+      background: var(--green-dark);
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .roster-card-header h4 { color: var(--gold); font-size: 0.95rem; }
+
+    .roster-card-body { padding: 12px; }
+
+    .roster-stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--gray-light);
+      font-size: 0.85rem;
+    }
+
+    .roster-stat-label { color: var(--gray-dark); }
+    .roster-stat-value { font-weight: bold; color: var(--green-dark); }
+
+    /* ─── WEEK CARD ─── */
+    .week-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .week-card {
+      background: var(--white);
+      border: 1px solid var(--gray-mid);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .week-card-header {
+      background: var(--green-mid);
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .week-card-title { color: var(--gold); font-weight: bold; }
+    .week-card-date { color: var(--gray-mid); font-size: 0.8rem; }
+    .week-card-body { padding: 12px; }
+
+    /* ─── ADMIN PANEL ─── */
+    .admin-panel {
+      max-width: 600px;
+    }
+
+    .admin-login {
+      background: var(--white);
+      border: 1px solid var(--gray-mid);
+      border-radius: 8px;
+      padding: 32px;
+      text-align: center;
+    }
+
+    .admin-login h3 { color: var(--green-dark); margin-bottom: 20px; }
+
+    .form-group { margin-bottom: 16px; text-align: left; }
+    .form-group label { display: block; font-size: 0.85rem; color: var(--gray-dark); margin-bottom: 6px; }
+
+    input[type="password"], input[type="text"], input[type="number"], textarea, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-mid);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      background: var(--white);
+    }
+
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--green-light);
+      box-shadow: 0 0 0 2px rgba(74,140,64,0.2);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .btn-primary { background: var(--green-mid); color: var(--white); }
+    .btn-primary:hover { background: var(--green-light); }
+    .btn-gold { background: var(--gold); color: var(--green-dark); font-weight: bold; }
+    .btn-gold:hover { background: var(--gold-light); }
+    .btn-danger { background: var(--red); color: var(--white); }
+    .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+
+    .admin-section {
+      background: var(--white);
+      border: 1px solid var(--gray-mid);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .admin-section h4 {
+      color: var(--green-dark);
+      font-size: 0.95rem;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--gray-mid);
+    }
+
+    .upload-zone {
+      border: 2px dashed var(--green-light);
+      border-radius: 6px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      color: var(--gray-dark);
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .upload-zone:hover { border-color: var(--gold); background: var(--gray-light); }
+
+    .result-box {
+      background: var(--gray-light);
+      border: 1px solid var(--gray-mid);
+      border-radius: 4px;
+      padding: 12px;
+      font-size: 0.85rem;
+      margin-top: 12px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .alert-success {
+      background: #e8f5e8;
+      border: 1px solid #4a8c40;
+      color: #1a5a1a;
+      padding: 10px 14px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
+    }
+
+    .alert-info {
+      background: #e8eef8;
+      border: 1px solid #4a70c0;
+      color: #1a2a5a;
+      padding: 10px 14px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
+    }
+
+    /* ─── FOOTER ─── */
+    .app-footer {
+      background: var(--green-dark);
+      color: var(--gray-mid);
+      text-align: center;
+      padding: 12px;
+      font-size: 0.75rem;
+      border-top: 2px solid var(--gold);
+    }
+
+    /* ─── RECORD DISPLAY ─── */
+    .record-display {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    .record-w { color: var(--green-mid); }
+    .record-l { color: var(--red); }
+    .record-sep { color: var(--gray-dark); }
+
+    @media (max-width: 600px) {
+      .main-content { padding: 12px; }
+      .stat-cards { grid-template-columns: repeat(2, 1fr); }
+      .app-header { padding: 12px; }
+      .header-text h1 { font-size: 1.2rem; }
+    }
+
+    /* ─── WEATHER CELL ─── */
+    .weather-cell { font-size: 0.75rem; color: var(--gray-dark); text-align: center; line-height: 1.4; }
+    .weather-temp { font-weight: bold; color: var(--green-dark); }
+
+    /* ─── BEER BIRD DEBT BOARD ─── */
+    .debt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .debt-card { background: var(--white); border: 1px solid var(--gray-mid); border-radius: 8px; padding: 14px 10px; text-align: center; }
+    .debt-card.clear  { border-top: 3px solid #2ecc71; }
+    .debt-card.owes   { border-top: 3px solid var(--red); }
+    .debt-card.earned { border-top: 3px solid var(--gold); }
+    .debt-name   { font-weight: bold; color: var(--green-dark); font-size: 0.84rem; margin-bottom: 6px; line-height: 1.3; }
+    .debt-status { font-size: 1.4rem; font-weight: bold; margin: 4px 0; }
+    .debt-status.clear-txt  { color: #2ecc71; }
+    .debt-status.owes-txt   { color: var(--red); }
+    .debt-status.earned-txt { color: var(--gold); }
+    .debt-note { font-size: 0.72rem; color: var(--gray-dark); margin-top: 4px; }
+
+    /* ─── SUMMARY STAT ROW ─── */
+    .stat-row-sm { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    .stat-sm { background: var(--white); border: 1px solid var(--gray-mid); border-radius: 6px; padding: 10px; text-align: center; }
+    .stat-sm-label { font-size: 0.68rem; color: var(--gray-dark); letter-spacing: 0.4px; text-transform: uppercase; }
+    .stat-sm-value { font-size: 1.05rem; font-weight: bold; color: var(--green-dark); margin: 3px 0; }
+    .stat-sm-sub { font-size: 0.7rem; color: var(--gray-dark); }
+
+    /* ─── ROAST BOARD ─── */
+    .roast-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(285px, 1fr)); gap: 16px; }
+    .roast-card { background: var(--white); border: 1px solid var(--gray-mid); border-radius: 8px; padding: 16px; }
+    .roast-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .roast-name { font-weight: bold; color: var(--green-dark); font-size: 0.95rem; }
+    .roast-stats-txt { font-size: 0.68rem; color: var(--gray-dark); line-height: 1.5; text-align: right; }
+    .roast-body { font-size: 0.83rem; color: var(--text); line-height: 1.55; font-style: italic; margin-bottom: 10px; border-left: 3px solid var(--gray-mid); padding-left: 10px; }
+    .roast-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+    .rtag { font-size: 0.68rem; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
+    .rtag-gold { background: var(--gold); color: var(--green-dark); }
+    .rtag-red  { background: var(--red);  color: var(--white); }
+    .rtag-def  { background: var(--green-dark); color: var(--gold-light); }
+
+    /* ─── DARK ORANGE THEME OVERRIDES ─── */
+    .section-title { color: var(--gold) !important; }
+    .stat-value { color: var(--gold) !important; }
+    .stat-label, .stat-sub { color: var(--gray-dark) !important; }
+    .td-name { color: var(--gold) !important; }
+    .roster-stat-value { color: var(--text) !important; }
+    .roster-stat-label { color: var(--gray-dark) !important; }
+    .roster-card-body { background: #2a2a2a !important; }
+    .week-card-body { background: #2a2a2a !important; }
+    .stat-sm-value { color: var(--gold) !important; }
+    .stat-sm-label, .stat-sm-sub { color: var(--gray-dark) !important; }
+    tbody td { color: var(--text); }
+    tbody tr:hover { background: rgba(255,122,26,0.08) !important; }
+    tbody tr:nth-child(even) { background: #252525; }
+    input, textarea, select { background: #333; color: var(--text); border-color: var(--gray-mid); }
+    input:focus, textarea:focus, select:focus { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(255,122,26,0.2); }
+    .upload-zone { border-color: var(--gold); color: var(--gray-dark); }
+    .result-box { background: #1a1a1a; border-color: var(--gray-mid); color: var(--text); }
+    .admin-login h3, .admin-section h4 { color: var(--gold) !important; }
+    .form-group label { color: var(--gray-dark) !important; }
+    .alert-success { background: #1a2a1a; border-color: #2ecc71; color: #a8e0a8; }
+    .alert-info { background: #1a1a2a; border-color: #4a70c0; color: #a8b8e0; }
+    .badge-win { background: #1a4a1a; color: #7add7a; }
+    .badge-loss { background: #4a1a1a; color: #e07070; }
+    .badge-pending { background: #333; color: #888; }
+    .badge-absent { background: #3a2a1a; color: #c8a060; }
+    .badge-a { background: #1a2a4a; color: #7aa0d8; }
+    .badge-b { background: #1a3a2a; color: #7ac8a0; }
+    .debt-card { background: #222; }
+    .debt-card.clear  { border-top-color: #2ecc71; background: #1a2a1a; }
+    .debt-card.owes   { border-top-color: var(--red); background: #2a1a1a; }
+    .debt-card.earned { border-top-color: var(--gold); background: #2a1a0a; }
+    .debt-name { color: var(--text) !important; }
+    .debt-note { color: var(--gray-dark) !important; }
+    .roster-card-header h4 { color: var(--gold-light) !important; }
+    .roast-name { color: var(--gold) !important; }
+    .roast-stats-txt { color: var(--gray-dark) !important; }
+    .roast-body { color: var(--text) !important; border-left-color: var(--gray-mid); }
+    .rtag-gold { background: var(--gold); color: #111; }
+    .rtag-def  { background: #333; color: var(--gold-light); }
+    .weather-temp { color: var(--gold) !important; }
+    .weather-cell { color: var(--gray-dark) !important; }
+    .record-w { color: #7add7a !important; }
+    .record-l { color: #e07070 !important; }
+    .record-sep { color: var(--gray-dark) !important; }
+    /* 3-week avg table */
+    .avg-trend-up { color: #2ecc71; font-weight: bold; }
+    .avg-trend-dn { color: var(--red); font-weight: bold; }
+    .avg-trend-eq { color: var(--gray-dark); }
+    .three-wk-highlight { background: rgba(255,122,26,0.12) !important; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // ─── SEED DATA (2026 Season) ───────────────────────────────────────────
+    // Results sourced from official Joe Bronson standings emails (Class A Singles + Class B Handicap).
+    // Each class plays a DIFFERENT opponent each week — singlesResult / handicapResult track per-class.
+    // result = summary: 'WIN' (both W), 'LOSS' (both L), 'SPLIT' (one each)
+    const SEASON_DATA = {
+      W1: {
+        date: '4/28/2026',
+        singles: { yardage: 16, scores: { 'Bill Curtis': 21, 'Kevin Beckmann': 21, 'Tim Michael': 22, 'Brad Beckmann': 24, 'Glenn Esselman': 20, 'Dave Krupa': 21 } },
+        handicap: { yardage: 22, scores: { 'Bill Curtis': 23, 'Kevin Beckmann': 15, 'Tim Michael': 16, 'Brad Beckmann': 18, 'Glenn Esselman': 19, 'Dave Krupa': 19 } },
+        singlesResult: 'LOSS',
+        handicapResult: 'WIN',
+        result: 'SPLIT',
+        note: 'Full team present. Singles LOSS (120 vs 123 Team#6), Handicap WIN (95 vs 94 Team#6).'
+      },
+      W2: {
+        date: '5/5/2026',
+        singles: { yardage: 16, scores: { 'Bill Curtis': 19, 'Kevin Beckmann': 19, 'Tim Michael': 15, 'Brad Beckmann': 19, 'Glenn Esselman': 19, 'Dave Krupa': 23 } },
+        handicap: { yardage: 20, scores: { 'Bill Curtis': 22, 'Kevin Beckmann': 22, 'Tim Michael': 23, 'Brad Beckmann': 24, 'Glenn Esselman': 22, 'Dave Krupa': 18 } },
+        singlesResult: 'LOSS',
+        handicapResult: 'WIN',
+        result: 'SPLIT',
+        note: "Singles LOSS (114 vs 118 Team#2), Handicap WIN (113 vs 89 Team#8). Brad: '5 scores on high shooters board for handicap!'"
+      },
+      W3: {
+        date: '5/12/2026',
+        singles: { yardage: 16, scores: { 'Bill Curtis': 24, 'Kevin Beckmann': 23, 'Tim Michael': 18, 'Brad Beckmann': 17, 'Glenn Esselman': 19, 'Dave Krupa': 22 } },
+        handicap: { yardage: 25, scores: { 'Bill Curtis': 18, 'Kevin Beckmann': 18, 'Tim Michael': 16, 'Brad Beckmann': 16, 'Glenn Esselman': 18, 'Dave Krupa': 21 } },
+        singlesResult: 'LOSS',
+        handicapResult: 'WIN',
+        result: 'SPLIT',
+        note: 'Full team. Singles LOSS (122 vs 124 Team#1), Handicap WIN (91 vs 79 Team#1).'
+      },
+      W4: {
+        date: '5/19/2026',
+        singles: { yardage: 16, scores: { 'Bill Curtis': 24, 'Dave Krupa': 22, 'Kevin Beckmann': 21, 'Brad Beckmann': 23, 'Tim Michael': 22, 'Glenn Esselman': 18 } },
+        handicap: { yardage: 23, scores: { 'Bill Curtis': 18, 'Dave Krupa': 16, 'Kevin Beckmann': 19, 'Brad Beckmann': 15, 'Tim Michael': 17, 'Glenn Esselman': 13 } },
+        singlesResult: 'WIN',
+        handicapResult: 'LOSS',
+        result: 'SPLIT',
+        note: 'Singles WIN (126 vs 106 Team#9), Handicap LOSS (85 vs 88 Team#2). Station cards not found.'
+      },
+      W5: {
+        date: '5/26/2026',
+        singles: { yardage: 16, scores: { 'Bill Curtis': 21, 'Kevin Beckmann': 16, 'Tim Michael': 22, 'Brad Beckmann': 22, 'Glenn Esselman': 22, 'Dave Krupa': 23 } },
+        handicap: { yardage: 21, scores: { 'Bill Curtis': 23, 'Kevin Beckmann': 20, 'Tim Michael': 17, 'Brad Beckmann': 21, 'Glenn Esselman': 18, 'Dave Krupa': 21 } },
+        singlesResult: 'WIN',
+        handicapResult: 'LOSS',
+        result: 'SPLIT',
+        note: 'Singles WIN (125 vs 120 Team#8), Handicap LOSS (103 vs 109 Team#4).'
+      },
+      W6: {
+        date: '6/2/2026',
+        maxScore: 125,
+        singles: { yardage: 16, scores: { 'Bill Curtis': 21, 'Kevin Beckmann': 20, 'Tim Michael': null, 'Brad Beckmann': 20, 'Glenn Esselman': 19, 'Dave Krupa': 23 }, zeroStation: 'Glenn Esselman' },
+        handicap: { yardage: 21, scores: { 'Bill Curtis': 24, 'Kevin Beckmann': 18, 'Tim Michael': null, 'Brad Beckmann': 23, 'Glenn Esselman': 21, 'Dave Krupa': 23 } },
+        singlesResult: 'LOSS',
+        handicapResult: 'WIN',
+        result: 'SPLIT',
+        note: '⚠️ CORRECTED 2026-07-13 vs official club tracking sheet — was wrongly recorded as WIN vs 112. Tim absent. Glenn zero station (Singles). Singles LOSS (117 vs 120 Team#4), Handicap WIN (109 vs 86 Team#3). 🍺 Beer birds — Glenn S1-B2 HIT, Dave Hcp S4-B2 HIT, Dave Hcp S6-B3 HIT.'
+      },
+      W7: {
+        date: '6/9/2026',
+        singles: { yardage: 16, teamTotal: 121, maxScore: 125, scores: { 'Bill Curtis': 23, 'Kevin Beckmann': 18, 'Tim Michael': null, 'Brad Beckmann': 18, 'Glenn Esselman': 21, 'Dave Krupa': 23 } },
+        handicap: { yardage: 22, teamTotal: 93, scores: { 'Bill Curtis': 18, 'Kevin Beckmann': 18, 'Tim Michael': 15, 'Brad Beckmann': 14, 'Glenn Esselman': 19, 'Dave Krupa': 23 } },
+        singlesResult: 'LOSS',
+        handicapResult: 'LOSS',
+        result: 'LOSS',
+        note: 'Tim ABS (Singles only — shot Handicap ahead). Singles LOSS (121 vs 125). Handicap LOSS (93 vs 94 — one bird). ⚠️ Individual scores from draft; discrepancy vs official totals noted (teamTotal overrides used). 🍺 Dave Singles S2-B7 HIT.'
+      },
+      W8: {
+        date: '6/16/2026',
+        singles: { yardage: 16, scores: { 'Bill Curtis': 24, 'Kevin Beckmann': null, 'Tim Michael': 21, 'Brad Beckmann': 21, 'Glenn Esselman': 22, 'Dave Krupa': 23 } },
+        handicap: { yardage: 22, scores: { 'Bill Curtis': 19, 'Kevin Beckmann': null, 'Tim Michael': 20, 'Brad Beckmann': 18, 'Glenn Esselman': 20, 'Dave Krupa': 20 } },
+        singlesResult: 'WIN',
+        handicapResult: 'LOSS',
+        result: 'SPLIT',
+        note: '⚠️ CORRECTED 2026-07-13 vs official club tracking sheet — was wrongly recorded as LOSS/LOSS. Kevin ABSENT (Lucas M sub, unofficial). Singles WIN 122 vs 120 Team#7 (scratch 111 + blind 11). Handicap LOSS 97 vs 98 Team#6. Bill 24 high of night Singles. Scorecard photos still needed for station data.'
+      },
+      W9: {
+        date: '6/23/2026',
+        singles: { yardage: 16, scores: { 'Bill Curtis': 21, 'Kevin Beckmann': 23, 'Tim Michael': 22, 'Brad Beckmann': 21, 'Glenn Esselman': 20, 'Dave Krupa': 22 } },
+        handicap: { yardage: 22, scores: { 'Bill Curtis': 20, 'Kevin Beckmann': 15, 'Tim Michael': 13, 'Brad Beckmann': 16, 'Glenn Esselman': 13, 'Dave Krupa': 17 } },
+        singlesResult: 'LOSS',
+        handicapResult: 'LOSS',
+        result: 'LOSS',
+        note: 'ALL 6 PRESENT. Singles LOSS 122 vs 123 (Team#10) — lost by 1 bird. Handicap LOSS 81 vs 97. Source: Joe Bronson W9 standings PDFs confirmed all 6 present (confirmed 2026-06-26). 🍺 Tim Singles S1-B14 HIT (club owes Tim). 🍺 Glenn Handicap beer bird MISS → Glenn owes team a round → SETTLED (Glenn bought a round).'
+      },
+      W10: {
+        date: '6/30/2026',
+        singles: { yardage: 16, scores: { 'Bill Curtis': 23, 'Kevin Beckmann': 19, 'Tim Michael': 23, 'Brad Beckmann': 24, 'Glenn Esselman': 21, 'Dave Krupa': 22 }, zeroStation: null },
+        handicap: { yardage: 21, scores: { 'Bill Curtis': 20, 'Kevin Beckmann': 22, 'Tim Michael': 21, 'Brad Beckmann': 18, 'Glenn Esselman': 21, 'Dave Krupa': 23 } },
+        singlesResult: 'WIN',
+        handicapResult: 'WIN',
+        result: 'WIN',
+        note: 'ALL 6 PRESENT. Dave shot ahead (Group 11 Singles, Group 18 Handicap; 6/30). Singles competition 124/150 (scratch 132, drop Kevin 19) — WIN +1 vs Team#6 Gillen\'s Gunners (123). Handicap competition 107/150 (scratch 125, drop Brad 18) — WIN +4 vs Team#1 The Hutch (103). Season: Singles 4–6 · Handicap 5–5. Kevin $1 kitty (Singles, floor 20, shot 19). 🍺 Kevin Singles S4-B16 HIT. 🍺 Glenn Handicap S1-B7 HIT. Source: Joe Bronson W10 standings PDFs, confirmed 2026-07-02.'
+      },
+      W11: {
+        date: '7/7/2026',
+        singles: { yardage: 16, scores: { 'Bill Curtis': 21, 'Kevin Beckmann': 22, 'Tim Michael': 24, 'Brad Beckmann': 21, 'Glenn Esselman': 22, 'Dave Krupa': 23 } },
+        handicap: { yardage: 21, scores: { 'Bill Curtis': 19, 'Kevin Beckmann': 21, 'Tim Michael': 19, 'Brad Beckmann': 22, 'Glenn Esselman': 17, 'Dave Krupa': 22 } },
+        singlesResult: 'WIN',
+        handicapResult: 'LOSS',
+        result: 'SPLIT',
+        note: 'CONFIRMED 2026-07-13 vs official club tracking sheet. ALL 6 PRESENT. Singles: scratch 133, drop 21, +11 blind = competition 123 vs 119 Team#2 — WIN +4. Handicap: scratch 120, drop 17 (Glenn) = competition 103 vs 106 Team#2 — LOSS. 🔥 Bill HUNG Singles Rd2 (lone miss T8, everyone else clean) — $5 kitty. 🔥 Glenn HUNG Singles Rd5 (lone miss T23+T25, everyone else clean) — $5 kitty. Glenn also $1 kitty on Handicap (17, one under his 3-wk roll floor of 18). Hanging kitty W11 total: $10. 🍺 Bill Singles S3-B13 HIT. 🍺 Kevin Handicap S4-B9 HIT.'
+      },
+      W12: {
+        date: '7/14/2026',
+        singles: { yardage: 16, scores: { 'Bill Curtis': 18, 'Kevin Beckmann': 23, 'Tim Michael': 20, 'Brad Beckmann': 24, 'Glenn Esselman': 17, 'Dave Krupa': 24 } },
+        handicap: { yardage: 22, scores: { 'Bill Curtis': 21, 'Kevin Beckmann': 17, 'Tim Michael': 12, 'Brad Beckmann': 19, 'Glenn Esselman': 21, 'Dave Krupa': 18 } },
+        singlesResult: 'LOSS',
+        handicapResult: 'LOSS',
+        result: 'LOSS',
+        note: 'CONFIRMED 2026-07-15 vs official Joe Bronson Week 12 Standings (Singles Class A.pdf / Handicap Class B.pdf), verified bidirectionally against opponents\' own team pages. ALL 6 PRESENT (Dave + Glenn shot ahead 7/13 at Sauk Rifle & Pistol Club practice, 22yd Handicap confirmed by Dave). Singles: scratch 126, drop 17 (Glenn) = 109, +11 handicap targets = competition 120/150 — LOSS vs Team#1 The Hutch (122). Handicap: scratch 108, drop 12 (Tim) = competition 96/150 — LOSS vs Team#4 Central United (101). ⚠️ Glenn\'s Handicap score: Joe\'s official PDF shows 22, but that figure belongs to a different "Glenn" (Team#2 Worzalla Brothers) whose card got mixed up with ours — Glenn confirmed 21 by email 2026-07-15, matching the club scorekeeper\'s tracking sheet; 21 stands as final per club-sheet-authoritative rule (team total 96, not Joe\'s 97). 🍺 Kevin Handicap S4-B17 HIT. 🍺 Brad Singles S1-B4 MISS (owes team a round, still OPEN). Brad Handicap corrected 7/14 from a mis-recorded 14 to the card\'s actual 19 (full-res re-read, checksummed). Dave Handicap: marks count 19, card\'s own printed total reads 18 — official score stays 18 (same conflict pattern as Kevin W3H/Dave W6H/Glenn W9S). 🪢 Glenn HUNG Singles Rd2 (T6–10) and Rd3 (T11–15) — comparing round-by-round across both W12 cards, every other shooter (Kevin, Bill, Tim, Brad live 7/14 + Dave shot-ahead 7/13) went clean both rounds, Glenn missed both — $10 kitty (corrected 2026-07-18).'
+      },
+      W13: {
+        date: '7/21/2026',
+        singles: { yardage: 16, scores: { 'Bill Curtis': 25, 'Kevin Beckmann': 21, 'Tim Michael': 20, 'Brad Beckmann': 24, 'Glenn Esselman': 24, 'Dave Krupa': 17 } },
+        handicap: { yardage: 22, scores: { 'Bill Curtis': 18, 'Kevin Beckmann': 21, 'Tim Michael': 8, 'Brad Beckmann': 20, 'Glenn Esselman': 21, 'Dave Krupa': 12 } },
+        singlesResult: 'WIN',
+        handicapResult: 'LOSS',
+        result: 'SPLIT',
+        note: 'ALL 6 PRESENT, no shoot-aheads. Singles: scratch 131, drop Dave 17 = competition 114 — WIN vs Team#9 Clearshot Manufacturing (opponent scored 115 per club scorekeeper sheet — win-count cross-check + club Result column both independently confirm WIN despite the raw-score gap). Handicap: scratch 100, drop Tim 8 = competition 92 — LOSS vs Team#3 Schieble\'s (opponent scored 98, clean match, no ambiguity). 🎯 Bill Curtis shot the season\'s first PERFECT 25 (Singles) — $5 kitty tax from every other shooter, $25 to the pot. 🍺 Bill beer bird HIT (Singles, exact station not yet pinned — card shows a clean 25). Dave\'s 17 (Singles) and 12 (Handicap), Tim\'s 8 (Handicap) are all season lows — re-verified directly against the card image 2026-07-26, not misreads. Hang check run station-by-station across both cards: $0, no lone-miss situations (Dave missed at least once in every Handicap station, and at least one other shooter missed alongside him everywhere on both cards).'
+      },
+      W14: {
+        date: '7/28/2026',
+        singles: { yardage: 16, scores: { 'Bill Curtis': 23, 'Kevin Beckmann': 21, 'Tim Michael': 20, 'Brad Beckmann': 22, 'Glenn Esselman': 23, 'Dave Krupa': 15 } },
+        handicap: { yardage: 21, scores: { 'Bill Curtis': 17, 'Kevin Beckmann': 16, 'Tim Michael': 19, 'Brad Beckmann': 22, 'Glenn Esselman': 19, 'Dave Krupa': 11 } },
+        singlesResult: 'LOSS',
+        handicapResult: 'LOSS',
+        result: 'LOSS',
+        note: 'ALL 6 PRESENT, no shoot-aheads. Singles: scratch 124, drop Dave 15 = competition 109 vs Team#8 The Hamilton (128) — LOSS. Handicap: scratch 104, drop Dave 11 = competition 93 vs Team#7 Kitchen Pass Charters (105) — LOSS. Confirmed 2026-07-30 via Joe Bronson\'s official Week 14 standings (Singles Class A.pdf / Handicap Class B.pdf per-team cards + Team Standings.pdf win-count cross-check — BTG held at 6 wins Singles, 5 wins Handicap, both reconciling exactly against 14 games played). 🍺 Bill Curtis Singles beer bird HIT (Station 2 #20 per Dave). 🍺 Brad Beckmann Handicap beer bird HIT (Station 5 #23). 🍺 Dave Krupa Handicap beer bird MISS (Station 3 #4) — bought the team a round, SETTLED 7/29. Per Dave: everyone is current on beer bird penalties, $0 open debt. Dave\'s gun was stolen before W13; shooting a new gun — his Handicap 11 is a new season low. Hang check run round-by-round across both cards: $0, no lone-miss rounds on either card. No perfect-25 this week.'
+      },
+      W15: {
+        date: '8/4/2026',
+        singles: { yardage: 16, scores: { 'Bill Curtis': 22, 'Kevin Beckmann': 23, 'Tim Michael': 21, 'Brad Beckmann': 23, 'Glenn Esselman': 23, 'Dave Krupa': 17 } },
+        handicap: { yardage: 21, scores: { 'Bill Curtis': 20, 'Kevin Beckmann': 18, 'Tim Michael': 17, 'Brad Beckmann': 18, 'Glenn Esselman': 20, 'Dave Krupa': 6 } },
+        singlesResult: 'LOSS',
+        handicapResult: 'LOSS',
+        result: 'LOSS',
+        note: 'ALL 6 PRESENT. Own scores read off our club scorecards (Trap & Shooting album), confirmed by Dave 2026-08-04 — Singles 129/150, Handicap 99/150 (21yd). Singles: competition 123 — LOSS vs Team#4 Central United (125). Handicap: competition 93 — LOSS vs Team#6 League Ave. (98). Confirmed 2026-08-09 via Joe Bronson\'s official Week 15 standings (Singles Class A.pdf / Handicap Class B.pdf per-team cards + Team Standings.pdf win-count cross-check — BTG held at 6 wins Singles, 5 wins Handicap, both reconciling exactly against 15 games played). Both opponent identities matched the double round-robin forecast exactly. Dave\'s Handicap 6 is a new season low (re-checked against the card 2026-08-04, checksum confirms) — includes a zero-station, Handicap St3, 0-for-5 ($5 kitty, zero-station rule). 🍺 Bill Curtis Singles beer bird HIT (Station 5 #10, 16yd). 🍺 Brad Beckmann Handicap beer bird HIT (Station 5 #17). No misses this week. Hang check run round-by-round across both cards: $0, no lone-miss rounds. No perfect-25 this week.'
+      },
+    };
+
+    const BEER_BIRDS = [
+      { week: 'W6', shooter: 'Glenn Esselman', round: 'Singles',  position: 'S1-B2', result: 'HIT', note: 'Club owes Glenn a beer 🍺' },
+      { week: 'W6', shooter: 'Dave Krupa',     round: 'Handicap', position: 'S4-B2', result: 'HIT', note: 'Club owes Dave a beer 🍺' },
+      { week: 'W6', shooter: 'Dave Krupa',     round: 'Handicap', position: 'S6-B3', result: 'HIT', note: 'Club owes Dave a beer 🍺' },
+      { week: 'W7', shooter: 'Dave Krupa',     round: 'Singles',  position: 'S2-B7', result: 'HIT',  note: 'Club owes Dave a beer 🍺 · Season team total: 4 hits' },
+      { week: 'W9', shooter: 'Tim Michael',    round: 'Singles',  position: 'S1-B14', result: 'HIT', note: 'Club owes Tim a beer 🍺' },
+      { week: 'W9', shooter: 'Glenn Esselman', round: 'Handicap', position: null,     result: 'SETTLED', note: 'Glenn bought the team a round → SETTLED ✅' },
+      { week: 'W10', shooter: 'Kevin Beckmann', round: 'Singles',  position: 'S4-B16', result: 'HIT', note: 'Club owes Kevin a beer 🍺' },
+      { week: 'W10', shooter: 'Glenn Esselman', round: 'Handicap', position: 'S1-B7',  result: 'HIT', note: 'Club owes Glenn a beer 🍺' },
+      { week: 'W11', shooter: 'Bill Curtis',    round: 'Singles',  position: 'S3-B13', result: 'HIT', note: 'Club owes Bill a beer 🍺' },
+      { week: 'W11', shooter: 'Kevin Beckmann', round: 'Handicap', position: 'S4-B9',  result: 'HIT', note: 'Club owes Kevin a beer 🍺' },
+      { week: 'W12', shooter: 'Kevin Beckmann', round: 'Handicap', position: 'S4-B17', result: 'HIT', note: 'Club owes Kevin a beer 🍺' },
+      { week: 'W12', shooter: 'Brad Beckmann',  round: 'Singles',  position: 'S1-B4',  result: 'SETTLED', note: 'Brad bought the team a round → SETTLED ✅ (confirmed 2026-07-28)' },
+      { week: 'W13', shooter: 'Bill Curtis',    round: 'Singles',  position: null,     result: 'HIT', note: 'Club owes Bill a beer 🍺 · shot on his perfect 25, exact station not yet pinned' },
+      { week: 'W14', shooter: 'Bill Curtis',    round: 'Singles',  position: 'S2-B20', result: 'HIT', note: 'Club owes Bill a beer 🍺' },
+      { week: 'W14', shooter: 'Brad Beckmann',  round: 'Handicap', position: 'S5-B23', result: 'HIT', note: 'Club owes Brad a beer 🍺 · checksum-confirmed against printed total' },
+      { week: 'W14', shooter: 'Dave Krupa',     round: 'Handicap', position: 'S3-B4',  result: 'SETTLED', note: 'Dave bought the team a round → SETTLED ✅ (confirmed 2026-07-29)' },
+      { week: 'W15', shooter: 'Bill Curtis',    round: 'Singles',  position: 'S5-B10', result: 'HIT', note: 'Club owes Bill a beer 🍺 · confirmed by Dave in person 2026-08-04' },
+      { week: 'W15', shooter: 'Brad Beckmann',  round: 'Handicap', position: 'S5-B17', result: 'HIT', note: 'Club owes Brad a beer 🍺 · confirmed by Dave in person 2026-08-04' },
+    ];
+
+    const WEATHER_DATA = {
+      W1: { temp: 62, wind: '5 mph ESE',  conditions: 'Cool · Calm',       icon: '🌙' },
+      W2: { temp: 64, wind: '13 mph NNW', conditions: 'Chilly · Gusty',    icon: '🌥' },
+      W3: { temp: 70, wind: '11 mph SW',  conditions: 'Warm · Storm Late', icon: '⛈' },
+      W4: { temp: 62, wind: '14 mph NW',  conditions: 'Cool · Windy',      icon: '💨' },
+      W5: { temp: 76, wind: '8 mph SSW',  conditions: 'Warm · Cold Front', icon: '🌡' },
+      W6: { temp: 58, wind: '4 mph NNE',  conditions: 'Cool · Calm',       icon: '🌙' },
+      W7:  { temp: 77, wind: '5 mph E',   conditions: 'Warm · Hazy',        icon: '🌫' },
+      W8:  { temp: 66, wind: '9 mph W',   conditions: 'Cool · Post-Rain',   icon: '🌦' },
+      W9:  { temp: 68, wind: '5 mph SE',  conditions: 'Warm · Calm',        icon: '🌙' },
+      W10: { temp: 90, wind: '5 mph SW',  conditions: 'Hot · Clear',        icon: '☀️' },
+      W11: { temp: 90, wind: 'Calm',       conditions: 'Hot · Cloudy PM',    icon: '⛅' },
+      W12: { temp: 93, wind: '7 mph WSW',  conditions: 'Hot · Clear',        icon: '☀️' },
+      W13: { temp: 77, wind: '14 mph NNW', conditions: 'Warm · Windy',       icon: '⛅' },
+      W14: { temp: 77, wind: '7 mph E',    conditions: 'Warm · Fair',        icon: '🌙' },
+      // W15 (8/4): Wunderground's actual-temp field returned 0°F for this date on every retry —
+      // a site-side data gap (confirmed via 2 URL formats + reload), not a lookup miss. Wind/pressure/
+      // conditions loaded fine (evening: calm, cloudy). Temp shown as '—' rather than guessed — do not
+      // backfill with the historic-avg figure (79.8°F) as if it were the actual reading.
+      W15: { temp: '—', wind: 'Calm',      conditions: 'Cloudy · Calm (temp N/A — WU data gap)', icon: '☁️' },
+    };
+
+    // 3-week rolling-avg kitty ledger — full recompute 2026-07-14, source: SEASON_MASTER_2026.md Section 5.
+    // Rule: $1 per bird under the shooter's floor(mean of up to 3 preceding non-absent weeks), per class, per week.
+    // Hanging rule ($5, W10 forward): lone non-clean shooter in an otherwise-clean round.
+    // Zero-station rule ($5, running rule): any 0-for-5 at a single station. First: Glenn W6 (paid cash, pre-kitty-tracking, not in this table). Second: Dave W15 Handicap St3, folded into his w15 figure below.
+    const KITTY_DATA = [
+      { name: 'Dave Krupa',     singles: 1, handicap: 10, hangs: 0,  thruW12: 13, w13: 20, w14: 12, w15: 13, total: 58 },
+      { name: 'Glenn Esselman', singles: 1, handicap: 14, hangs: 5,  thruW12: 34, w13: 5,  w14: 0,  w15: 0, total: 39 },
+      { name: 'Tim Michael',    singles: 0, handicap: 7,  hangs: 0,  thruW12: 15, w13: 16, w14: 1,  w15: 0, total: 32 },
+      { name: 'Kevin Beckmann', singles: 7, handicap: 5,  hangs: 5,  thruW12: 19, w13: 5,  w14: 4,  w15: 0, total: 28 },
+      { name: 'Bill Curtis',    singles: 8, handicap: 8,  hangs: 5,  thruW12: 21, w13: 2,  w14: 2,  w15: 0, total: 25 },
+      { name: 'Brad Beckmann',  singles: 1, handicap: 12, hangs: 0,  thruW12: 13, w13: 5,  w14: 1,  w15: 2, total: 21 },
+    ];
+    const KITTY_TOTAL_THRU_W11 = 86;
+    const KITTY_W12_ADD = 29;
+    const KITTY_TOTAL_THRU_W12 = 115;
+    const KITTY_W13_ADD = 53;
+    const KITTY_TOTAL_THRU_W13 = 168;
+    const KITTY_W14_ADD = 20;
+    const KITTY_TOTAL_THRU_W14 = 188;
+    const KITTY_W15_ADD = 15;
+    const KITTY_TOTAL_THRU_W15 = 203;
+
+    // Circle misses per shooter per week (S+H combined; 25 max per class; null = absent)
+    const MISS_DATA = {
+      W1: { 'Bill Curtis':6,  'Kevin Beckmann':14, 'Tim Michael':12, 'Brad Beckmann':8,  'Glenn Esselman':11, 'Dave Krupa':10 },
+      W2: { 'Bill Curtis':9,  'Kevin Beckmann':9,  'Tim Michael':12, 'Brad Beckmann':7,  'Glenn Esselman':9,  'Dave Krupa':9  },
+      W3: { 'Bill Curtis':8,  'Kevin Beckmann':9,  'Tim Michael':16, 'Brad Beckmann':17, 'Glenn Esselman':13, 'Dave Krupa':7  },
+      W4: { 'Bill Curtis':8,  'Kevin Beckmann':10, 'Tim Michael':11, 'Brad Beckmann':12, 'Glenn Esselman':19, 'Dave Krupa':12 },
+      W5: { 'Bill Curtis':6,  'Kevin Beckmann':14, 'Tim Michael':11, 'Brad Beckmann':7,  'Glenn Esselman':10, 'Dave Krupa':6  },
+      W6: { 'Bill Curtis':5,  'Kevin Beckmann':12, 'Tim Michael':null,'Brad Beckmann':7, 'Glenn Esselman':10, 'Dave Krupa':4  },
+      W7: { 'Bill Curtis':9,  'Kevin Beckmann':14, 'Tim Michael':10, 'Brad Beckmann':18, 'Glenn Esselman':10, 'Dave Krupa':4  },
+      W8: { 'Bill Curtis':6, 'Kevin Beckmann':null, 'Tim Michael':9, 'Brad Beckmann':12, 'Glenn Esselman':10, 'Dave Krupa':7 },
+      W9: { 'Bill Curtis':9, 'Kevin Beckmann':17, 'Tim Michael':15, 'Brad Beckmann':13, 'Glenn Esselman':17, 'Dave Krupa':11 },
+      W10: { 'Bill Curtis':7, 'Kevin Beckmann':9, 'Tim Michael':6, 'Brad Beckmann':8, 'Glenn Esselman':8, 'Dave Krupa':5 },
+      W11: { 'Bill Curtis':10, 'Kevin Beckmann':7, 'Tim Michael':7, 'Brad Beckmann':7, 'Glenn Esselman':11, 'Dave Krupa':5 },
+      W12: { 'Bill Curtis':11, 'Kevin Beckmann':10, 'Tim Michael':18, 'Brad Beckmann':7, 'Glenn Esselman':12, 'Dave Krupa':8 },
+      W13: { 'Bill Curtis':7,  'Kevin Beckmann':8,  'Tim Michael':22, 'Brad Beckmann':6, 'Glenn Esselman':5,  'Dave Krupa':21 },
+      W14: { 'Bill Curtis':10, 'Kevin Beckmann':13, 'Tim Michael':11, 'Brad Beckmann':6, 'Glenn Esselman':8,  'Dave Krupa':24 },
+      W15: { 'Bill Curtis':8,  'Kevin Beckmann':9,  'Tim Michael':12, 'Brad Beckmann':9, 'Glenn Esselman':7,  'Dave Krupa':27 },
+    };
+
+    const ROAST_DATA = [
+      {
+        name: 'Bill Curtis',
+        stats: '85.4% overall · σ ≈ 2.1 · 42 misses (fewest)',
+        text: "Week after week, Bill shows up and does the business. 21.7 Singles average, 21.3 Handicap — top of the board in both classes through six weeks. He is not just the best shooter here, he is the reason the bar tab stays manageable for everyone else. W6: Singles 21, Handicap 24 — the high score of the night. At 42 total circle misses over six weeks, Bill is statistically proving what we all suspected: it is everyone else's round.",
+        tags: [{ label: '🏆 TOP GUN', type: 'gold' }],
+      },
+      {
+        name: 'Dave Krupa',
+        stats: '82.6% overall · σ ≈ 2.1 · 2× beer bird W6',
+        text: "The metronome of this operation. His Singles scores hover between 21 and 23 like a well-dialed carburetor, week after week. W6 delivered the full package: Singles 23, Handicap 23, and two beer bird kills in the same night — the most single-night beer bird damage in recorded team history. Only 4 circle misses total in W6. The set-and-forget suspension on this machine. You do not notice it until it is gone.",
+        tags: [{ label: '🍺 2× FREE BEER', type: 'gold' }, { label: '🎯 MR. RELIABLE', type: 'def' }],
+      },
+      {
+        name: 'Glenn Esselman',
+        stats: '75.4% overall · W4 Hcp 13/25 · W6 beer bird HIT',
+        text: "Glenn's W4 Handicap score was thirteen out of twenty-five. That crater does not deserve a context — it deserves a plaque. W6 added a new chapter: Glenn drew the zero station in Singles, spotting the other team a free bird before the round started. He still shot a 19 and then killed his beer bird. The man gives away starting advantages and still collects free beers. The 13 stays on the wall forever. The beer bird HIT is noted. The 13 stays.",
+        tags: [{ label: '🍺 W6 BEER EARNED', type: 'gold' }, { label: 'W4 HCP: 13/25', type: 'red' }],
+      },
+      {
+        name: 'Tim Michael',
+        stats: '74.6% overall · W2 S: 15/25 · W6: absent',
+        text: "Week 2. Sixteen yards. Fifteen out of twenty-five. Tim Michael walked to the 16-yard line and missed 10 birds. He rebounded to consistent 22s in Singles, which is legitimately solid. Then W6 arrived and Tim did not. Zero contributions. Zero misses. Zero accountability. The only way to guarantee a perfect night is to not show up, and Tim has found it. The W2 card stays in the ledger regardless.",
+        tags: [{ label: 'W2 S: 15/25', type: 'red' }, { label: 'W6: DNP', type: 'red' }],
+      },
+      {
+        name: 'Brad Beckmann',
+        stats: '79.6% overall · σ ≈ 3.1 · Captain · most variable',
+        text: "Brad Beckmann is not so much a shooter as a probability distribution. W1 Singles: 24. W3 Singles: 17. W2 Handicap: 24. W4 Handicap: 15. W6 Handicap: 23 — his best since W2, which receives one sentence of credit and no more. His σ of 3.1 still leads the squad — not because he is bad, but because nobody, including Brad, knows which Brad is showing up on Tuesday. He is the Captain. Consistency is a job requirement.",
+        tags: [{ label: '🃏 WILD CARD', type: 'def' }, { label: 'σ = 3.1', type: 'def' }],
+      },
+      {
+        name: 'Kevin Beckmann',
+        stats: '77.6% overall · W5 S: 16/25 · W1 Hcp: 15/25',
+        text: "Kevin opened W1 Handicap with a 15 from 22 yards — his father shot an 18 that same night. Closed W5 Singles with a 16 from 16 yards — nine misses at the shortest yardage in the rotation. W6: Singles 20, Handicap 18. Steady but not spectacular. Kevin hit one beer bird and missed one earlier in the season: one earned, one owed. He is running a beer deficit of exactly zero while somehow still being in debt. Classic Kevin.",
+        tags: [{ label: 'W5 S: 16/25', type: 'red' }, { label: 'W1 HCP: 15/25', type: 'red' }],
+      },
+    ];
+
+    const ROSTER = [
+      { name: 'Brad Beckmann', role: 'Captain', class: 'A', spot: 1 },
+      { name: 'Bill Curtis',   role: 'Shooter',  class: 'B', spot: 2 },
+      { name: 'Dave Krupa',    role: 'Shooter',  class: 'A', spot: 3 },
+      { name: 'Kevin Beckmann',role: 'Shooter',  class: 'B', spot: 4 },
+      { name: 'Tim Michael',   role: 'Shooter',  class: 'A', spot: 5 },
+      { name: 'Glenn Esselman',role: 'Shooter',  class: 'B', spot: 6 },
+    ];
+
+    const WEEKS_META = [
+      { key: 'W1', label: 'W1', date: '4/28', status: 'complete' },
+      { key: 'W2', label: 'W2', date: '5/5',  status: 'complete' },
+      { key: 'W3', label: 'W3', date: '5/12', status: 'complete' },
+      { key: 'W4', label: 'W4', date: '5/19', status: 'complete' },
+      { key: 'W5', label: 'W5', date: '5/26', status: 'complete' },
+      { key: 'W6', label: 'W6', date: '6/2',  status: 'complete' },
+      { key: 'W7', label: 'W7', date: '6/9',  status: 'complete' },
+      { key: 'W8', label: 'W8', date: '6/16', status: 'complete' },
+      { key: 'W9', label: 'W9', date: '6/23', status: 'complete' },
+    ];
+
+    // ─── STATION DATA (station-by-station scores [St1,St2,St3,St4,St5,St6]; null = skipped station) ──
+    // Shooter at position N starts at StN, shoots 5 consecutive, skips St(N-1).
+    // W1S = BLOCKED (HEIC) | W4S/W4H = cards not found | W6S/W6H = pending ghost-rotation read
+    const STATION_DATA = {
+      W1: {
+        singles: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 1, 'Dave Krupa': 6, 'Kevin Beckmann': 5, 'Brad Beckmann': 3, 'Tim Michael': 2, 'Glenn Esselman': 4 },
+          scores: {
+            'Bill Curtis': [4, 5, 4, 4, 4, null],
+            'Dave Krupa': [3, 3, 5, 5, null, 5],
+            'Kevin Beckmann': [5, 4, 4, null, 5, 3],
+            'Brad Beckmann': [5, null, 4, 5, 5, 5],
+            'Tim Michael': [null, 5, 4, 5, 4, 4],
+            'Glenn Esselman': [4, 4, null, 4, 4, 4],
+          }
+        },
+        handicap: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 1, 'Dave Krupa': 6, 'Kevin Beckmann': 5, 'Brad Beckmann': 3, 'Tim Michael': 2, 'Glenn Esselman': 4 },
+          scores: {
+            'Bill Curtis': [4, 4, 5, 5, 5, null],
+            'Dave Krupa': [3, 3, 4, 5, null, 4],
+            'Kevin Beckmann': [2, 3, 3, null, 3, 4],
+            'Brad Beckmann': [3, null, 4, 2, 5, 4],
+            'Tim Michael': [null, 4, 3, 4, 3, 2],
+            'Glenn Esselman': [4, 5, null, 4, 4, 2],
+          }
+        }
+      },
+      W2: {
+        singles: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 6, 'Dave Krupa': 4, 'Kevin Beckmann': 5, 'Brad Beckmann': 3, 'Tim Michael': 1, 'Glenn Esselman': 2 },
+          scores: {
+            'Bill Curtis': [4, 4, 5, 3, null, 3],
+            'Dave Krupa': [4, 5, null, 5, 4, 5],
+            'Kevin Beckmann': [3, 3, 5, null, 3, 5],
+            'Brad Beckmann': [3, null, 3, 3, 5, 5],
+            'Tim Michael': [3, 4, 4, 2, 2, null],
+            'Glenn Esselman': [null, 4, 4, 5, 3, 3],
+          }
+        },
+        handicap: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 6, 'Dave Krupa': 4, 'Kevin Beckmann': 5, 'Brad Beckmann': 3, 'Tim Michael': 1, 'Glenn Esselman': 2 },
+          scores: {
+            'Bill Curtis': [5, 5, 4, 4, null, 4],
+            'Dave Krupa': [2, 2, null, 5, 5, 4],
+            'Kevin Beckmann': [5, 4, 4, null, 5, 4],
+            'Brad Beckmann': [4, null, 5, 5, 5, 5],
+            'Tim Michael': [5, 5, 5, 4, 4, null],
+            'Glenn Esselman': [null, 4, 4, 5, 5, 4],
+          }
+        }
+      },
+      W3: {
+        singles: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 6, 'Dave Krupa': 3, 'Kevin Beckmann': 1, 'Brad Beckmann': 5, 'Tim Michael': 2, 'Glenn Esselman': 4 },
+          scores: {
+            'Bill Curtis': [5, 5, 5, 5, null, 4],
+            'Dave Krupa': [5, null, 3, 5, 5, 4],
+            'Kevin Beckmann': [5, 5, 4, 5, 4, null],
+            'Brad Beckmann': [4, 4, 3, null, 2, 4],
+            'Tim Michael': [null, 5, 5, 2, 3, 3],
+            'Glenn Esselman': [5, 4, null, 4, 4, 2],
+          }
+        },
+        handicap: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 6, 'Dave Krupa': 3, 'Kevin Beckmann': 1, 'Brad Beckmann': 5, 'Tim Michael': 2, 'Glenn Esselman': 4 },
+          scores: {
+            'Bill Curtis': [3, 4, 5, 3, null, 3],
+            'Dave Krupa': [3, null, 5, 4, 4, 5],
+            'Kevin Beckmann': [3, 3, 4, 3, 3, null],
+            'Brad Beckmann': [3, 5, 4, null, 1, 3],
+            'Tim Michael': [null, 4, 5, 3, 1, 3],
+            'Glenn Esselman': [5, 4, null, 5, 3, 1],
+          }
+        }
+      },
+      W4: {
+        singles: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 3, 'Dave Krupa': 6, 'Kevin Beckmann': 4, 'Brad Beckmann': 2, 'Tim Michael': 5, 'Glenn Esselman': 1 },
+          scores: {
+            'Bill Curtis': [5, null, 5, 5, 5, 4],
+            'Dave Krupa': [3, 5, 5, 5, null, 4],
+            'Kevin Beckmann': [4, 5, null, 2, 5, 5],
+            'Brad Beckmann': [null, 4, 4, 5, 5, 5],
+            'Tim Michael': [5, 5, 3, null, 5, 4],
+            'Glenn Esselman': [4, 3, 5, 2, 4, null],
+          }
+        },
+        handicap: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 3, 'Dave Krupa': 6, 'Kevin Beckmann': 4, 'Brad Beckmann': 2, 'Tim Michael': 5, 'Glenn Esselman': 1 },
+          scores: {
+            'Bill Curtis': [4, null, 4, 3, 4, 3],
+            'Dave Krupa': [2, 4, 4, 3, null, 3],
+            'Kevin Beckmann': [3, 4, null, 5, 3, 4],
+            'Brad Beckmann': [null, 2, 4, 3, 4, 2],
+            'Tim Michael': [4, 4, 4, null, 4, 1],
+            'Glenn Esselman': [4, 1, 4, 3, 1, null],
+          }
+        }
+      },
+      W5: {
+        singles: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 1, 'Dave Krupa': 6, 'Kevin Beckmann': 2, 'Brad Beckmann': 4, 'Tim Michael': 3, 'Glenn Esselman': 5 },
+          scores: {
+            'Bill Curtis': [4, 5, 5, 4, 3, null],
+            'Dave Krupa': [5, 5, 4, 5, null, 4],
+            'Kevin Beckmann': [null, 4, 3, 3, 4, 2],
+            'Brad Beckmann': [5, 4, null, 5, 4, 4],
+            'Tim Michael': [5, null, 4, 5, 3, 5],
+            'Glenn Esselman': [5, 3, 4, null, 5, 5],
+          }
+        },
+        handicap: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 1, 'Dave Krupa': 6, 'Kevin Beckmann': 2, 'Brad Beckmann': 4, 'Tim Michael': 3, 'Glenn Esselman': 5 },
+          scores: {
+            'Bill Curtis': [5, 4, 5, 4, 5, null],
+            'Dave Krupa': [3, 4, 5, 4, null, 5],
+            'Kevin Beckmann': [null, 4, 3, 4, 5, 4],
+            'Brad Beckmann': [5, 5, null, 3, 4, 4],
+            'Tim Michael': [3, null, 3, 4, 4, 3],
+            'Glenn Esselman': [3, 5, 3, null, 4, 3],
+          }
+        }
+      },
+      W6: {
+        singles: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 3, 'Dave Krupa': 6, 'Kevin Beckmann': 1, 'Brad Beckmann': 5, 'Glenn Esselman': 2 },
+          scores: {
+            'Bill Curtis': [5, null, 4, 4, 4, 4],
+            'Dave Krupa': [5, 5, 4, 4, null, 5],
+            'Kevin Beckmann': [3, 3, 5, 4, 5, null],
+            'Brad Beckmann': [5, 4, 5, null, 3, 3],
+            'Glenn Esselman': [null, 4, 5, 5, 5, 0],
+          }
+        },
+        handicap: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 3, 'Dave Krupa': 6, 'Kevin Beckmann': 1, 'Brad Beckmann': 5, 'Glenn Esselman': 2 },
+          scores: {
+            'Bill Curtis': [5, null, 5, 5, 5, 4],
+            'Dave Krupa': [4, 4, 4, 5, null, 5],
+            'Kevin Beckmann': [3, 5, 4, 2, 4, null],
+            'Brad Beckmann': [5, 4, 5, null, 5, 4],
+            'Glenn Esselman': [null, 5, 4, 4, 4, 4],
+          }
+        }
+      },
+      W7: {
+        singles: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 3, 'Dave Krupa': 1, 'Kevin Beckmann': 5, 'Brad Beckmann': 4, 'Glenn Esselman': 6 },
+          scores: {
+            'Bill Curtis': [5, null, 5, 4, 5, 4],
+            'Dave Krupa': [5, 4, 5, 4, 5, null],
+            'Kevin Beckmann': [4, 5, 4, null, 2, 3],
+            'Brad Beckmann': [4, 5, null, 5, 3, 4],
+            'Glenn Esselman': [5, 4, 4, 4, null, 4],
+          }
+        },
+        handicap: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 3, 'Dave Krupa': 1, 'Kevin Beckmann': 2, 'Brad Beckmann': 4, 'Glenn Esselman': 6 },
+          scores: {
+            'Bill Curtis': [4, null, 4, 5, 2, 3],
+            'Dave Krupa': [4, 5, 5, 5, 4, null],
+            'Kevin Beckmann': [null, 3, 3, 5, 3, 4],
+            'Brad Beckmann': [2, 5, null, 2, 3, 2],
+            'Glenn Esselman': [4, 4, 4, 4, null, 3],
+          }
+        }
+      },
+      W8: {
+        singles: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 1, 'Dave Krupa': 2, 'Brad Beckmann': 3, 'Tim Michael': 5, 'Glenn Esselman': 6, 'Lucas Michael': 4 },
+          scores: {
+            'Bill Curtis': [5, 5, 5, 5, 4, null],
+            'Dave Krupa': [null, 5, 4, 4, 5, 5],
+            'Brad Beckmann': [2, null, 4, 5, 5, 5],
+            'Tim Michael': [4, 5, 5, null, 4, 3],
+            'Glenn Esselman': [4, 5, 3, 5, null, 5],
+            'Lucas Michael': [2, 3, null, 5, 4, 3],
+          }
+        },
+        handicap: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 1, 'Dave Krupa': 2, 'Brad Beckmann': 3, 'Tim Michael': 5, 'Glenn Esselman': 6, 'Lucas Michael': 4 },
+          scores: {
+            'Bill Curtis': [4, 4, 2, 4, 5, null],
+            'Dave Krupa': [null, 5, 4, 4, 3, 4],
+            'Brad Beckmann': [3, null, 5, 4, 3, 3],
+            'Tim Michael': [4, 4, 5, null, 4, 3],
+            'Glenn Esselman': [5, 4, 3, 4, null, 4],
+            'Lucas Michael': [3, 3, null, 4, 2, 4],
+          }
+        }
+      },
+      W9: {
+        singles: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 1, 'Dave Krupa': 6, 'Kevin Beckmann': 3, 'Brad Beckmann': 4, 'Tim Michael': 5, 'Glenn Esselman': 2 },
+          scores: {
+            'Bill Curtis': [4, 4, 4, 5, 4, null],
+            'Dave Krupa': [5, 4, 4, 5, null, 4],
+            'Kevin Beckmann': [5, null, 5, 5, 4, 4],
+            'Brad Beckmann': [3, 5, null, 3, 5, 5],
+            'Tim Michael': [5, 5, 4, null, 3, 5],
+            'Glenn Esselman': [null, 4, 4, 3, 4, 4],
+          }
+        },
+        handicap: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 1, 'Dave Krupa': 6, 'Kevin Beckmann': 3, 'Brad Beckmann': 4, 'Tim Michael': 5, 'Glenn Esselman': 2 },
+          scores: {
+            'Bill Curtis': [5, 5, 3, 4, 3, null],
+            'Dave Krupa': [3, 3, 4, 2, null, 5],
+            'Kevin Beckmann': [2, null, 4, 2, 4, 3],
+            'Brad Beckmann': [2, 3, null, 4, 3, 4],
+            'Tim Michael': [5, 1, 2, null, 2, 3],
+            'Glenn Esselman': [null, 3, 4, 3, 1, 2],
+          }
+        }
+      },
+      W10: {
+        singles: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 3, 'Kevin Beckmann': 1, 'Brad Beckmann': 4, 'Tim Michael': 5, 'Glenn Esselman': 6 },
+          scores: {
+            'Bill Curtis': [5, null, 5, 5, 5, 3],
+            'Dave Krupa': [5, 4, 4, 5, null, 4],
+            'Kevin Beckmann': [5, 3, 4, 4, 3, null],
+            'Brad Beckmann': [5, 5, null, 5, 5, 4],
+            'Tim Michael': [4, 5, 4, null, 5, 5],
+            'Glenn Esselman': [5, 4, 4, 4, null, 4],
+          }
+        },
+        handicap: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 3, 'Kevin Beckmann': 1, 'Brad Beckmann': 4, 'Tim Michael': 5, 'Glenn Esselman': 6 },
+          scores: {
+            'Bill Curtis': [5, null, 5, 5, 3, 2],
+            'Dave Krupa': [5, 5, 4, 4, null, 5],
+            'Kevin Beckmann': [4, 4, 5, 4, 5, null],
+            'Brad Beckmann': [3, 4, null, 4, 3, 4],
+            'Tim Michael': [4, 4, 5, null, 4, 4],
+            'Glenn Esselman': [5, 3, 4, 5, null, 4],
+          }
+        }
+      },
+      W11: {
+        singles: {
+          estimated: false,
+          shooterStarts: { 'Bill Curtis': 1, 'Dave Krupa': 2, 'Kevin Beckmann': 3, 'Brad Beckmann': 6, 'Tim Michael': 5, 'Glenn Esselman': 4 },
+          scores: {
+            'Bill Curtis': [3, 4, 4, 5, 5, null],
+            'Dave Krupa': [null, 4, 5, 4, 5, 5],
+            'Kevin Beckmann': [5, null, 4, 5, 4, 4],
+            'Brad Beckmann': [5, 3, 5, 5, null, 3],
+            'Tim Michael': [5, 5, 5, null, 4, 5],
+            'Glenn Esselman': [4, 3, null, 5, 5, 5],
+          }
+        },
+        handicap: {
+          estimated: false,  // full cell-by-cell read of all 6 shooters completed 2026-07-15, checksummed against every printed total (STATION_REREAD_2026-07-03.md)
+          shooterStarts: { 'Bill Curtis': 1, 'Dave Krupa': 2, 'Kevin Beckmann': 3, 'Brad Beckmann': 6, 'Tim Michael': 5, 'Glenn Esselman': 4 },
+          scores: {
+            'Bill Curtis': [3, 4, 4, 4, 4, null],
+            'Dave Krupa': [null, 4, 3, 5, 5, 5],
+            'Kevin Beckmann': [3, null, 4, 4, 5, 5],
+            'Glenn Esselman': [2, 4, null, 4, 3, 4],
+            'Tim Michael': [4, 5, 4, null, 3, 3],
+            'Brad Beckmann': [4, 4, 5, 5, null, 4],
+          }
+        }
+      },
+      // W12 arrays are literal per-station order [St1,St2,St3,St4,St5,St6] — matches every other week's
+      // storage convention. Source: STATION_REREAD_2026-07-03.md station_W12_singles / station_W12_handicap,
+      // built from the block-order card reads applying Dave's fixed rotation rule (Kevin=1...Dave=6, 2026-07-14).
+      // Corrects an earlier version of this entry that stored block order instead (every shooter's null wrongly
+      // parked at St6) — caught and fixed 2026-07-15.
+      W12: {
+        singles: {
+          estimated: false,
+          shooterStarts: { 'Kevin Beckmann': 1, 'Bill Curtis': 2, 'Tim Michael': 3, 'Brad Beckmann': 4, 'Glenn Esselman': 5, 'Dave Krupa': 6 },
+          scores: {
+            'Kevin Beckmann': [3, 5, 5, 5, 5, null],
+            'Bill Curtis': [null, 3, 5, 5, 2, 3],
+            'Tim Michael': [4, null, 3, 5, 5, 3],
+            'Brad Beckmann': [4, 5, null, 5, 5, 5],
+            'Glenn Esselman': [3, 4, 4, null, 3, 3],
+            'Dave Krupa': [5, 5, 4, 5, null, 5],
+          }
+        },
+        handicap: {
+          estimated: false,  // Dave's row: marks count 19 (used here); card's own printed total reads 18 — same marks/total conflict as Kevin W3H/Dave W6H/Glenn W9S
+          shooterStarts: { 'Kevin Beckmann': 1, 'Bill Curtis': 2, 'Tim Michael': 3, 'Brad Beckmann': 4, 'Glenn Esselman': 5, 'Dave Krupa': 6 },
+          scores: {
+            'Kevin Beckmann': [4, 2, 3, 3, 5, null],
+            'Bill Curtis': [null, 3, 4, 4, 5, 5],
+            'Tim Michael': [2, null, 2, 4, 3, 1],
+            'Brad Beckmann': [4, 4, null, 3, 5, 3],
+            'Glenn Esselman': [4, 4, 4, null, 5, 4],
+            'Dave Krupa': [4, 4, 5, 4, null, 2],
+          }
+        }
+      },
+      // W13 arrays: block-order card reads (5 stations of 5 birds, sequential 1-25) converted to the
+      // 6-column rotation. CORRECTED 2026-07-27 — the "fixed personal rule" used for W12 and earlier
+      // (Kevin=1, Bill=2, Tim=3, Brad=4, Glenn=5, Dave=6, every week regardless of card) was wrong per
+      // Dave: starting station = row position on THAT week's card, which changes week to week. W13's
+      // row order was Brad, Bill, Kevin, Tim, Dave, Glenn (top to bottom) — so starts are Brad=1, Bill=2,
+      // Kevin=3, Tim=4, Dave=5, Glenn=6. Block-level hit counts are unchanged (already checksummed
+      // against printed totals 2026-07-26); only the column placement moved. Dave's Handicap St1 cell
+      // (his card's column 1, now mapped to table column 5 below) was double-inked/scribbled on the
+      // card — re-examined at high zoom and read as a miss, consistent with the block reconciling to 3.
+      // NOTE: W12-and-earlier STATION_DATA entries in this file still use the fixed-rule assumption and
+      // have NOT been re-verified against actual card row order — flagged to Dave, not yet corrected.
+      W13: {
+        singles: {
+          estimated: false,
+          shooterStarts: { 'Brad Beckmann': 1, 'Bill Curtis': 2, 'Kevin Beckmann': 3, 'Tim Michael': 4, 'Dave Krupa': 5, 'Glenn Esselman': 6 },
+          scores: {
+            'Brad Beckmann': [5, 5, 5, 5, 4, null],
+            'Bill Curtis': [null, 5, 5, 5, 5, 5],
+            'Kevin Beckmann': [4, null, 5, 4, 4, 4],
+            'Tim Michael': [4, 5, null, 4, 2, 5],
+            'Dave Krupa': [2, 4, 2, null, 4, 5],
+            'Glenn Esselman': [5, 5, 5, 5, null, 4],
+          }
+        },
+        handicap: {
+          estimated: false,
+          shooterStarts: { 'Brad Beckmann': 1, 'Bill Curtis': 2, 'Kevin Beckmann': 3, 'Tim Michael': 4, 'Dave Krupa': 5, 'Glenn Esselman': 6 },
+          scores: {
+            'Brad Beckmann': [4, 4, 3, 4, 5, null],
+            'Bill Curtis': [null, 4, 4, 4, 3, 3],
+            'Kevin Beckmann': [3, null, 4, 5, 5, 4],
+            'Tim Michael': [1, 1, null, 1, 2, 3],
+            'Dave Krupa': [2, 2, 2, null, 3, 3],
+            'Glenn Esselman': [5, 4, 4, 5, null, 3],
+          }
+        }
+      },
+      // W14: row order Brad, Tim, Dave, Bill, Glenn, Kevin (top to bottom) — starts Brad=1, Tim=2, Dave=3,
+      // Bill=4, Glenn=5, Kevin=6. Read from full-resolution scorecard photos 2026-07-28, checksummed
+      // cell-by-cell against each shooter's printed total. Bill's Singles beer bird (card col 20) HIT;
+      // Dave's Handicap beer bird (card col 4) MISS; Brad's Handicap beer bird (card col 23) HIT —
+      // all three folded into the raw hit counts below, see SEASON_MASTER_2026.md Section 4/6b for detail.
+      W14: {
+        singles: {
+          estimated: false,
+          shooterStarts: { 'Brad Beckmann': 1, 'Tim Michael': 2, 'Dave Krupa': 3, 'Bill Curtis': 4, 'Glenn Esselman': 5, 'Kevin Beckmann': 6 },
+          scores: {
+            'Brad Beckmann': [5, 4, 5, 4, 4, null],
+            'Tim Michael': [null, 4, 5, 5, 4, 2],
+            'Dave Krupa': [2, null, 4, 2, 4, 3],
+            'Bill Curtis': [5, 5, null, 4, 5, 4],
+            'Glenn Esselman': [5, 5, 5, null, 3, 5],
+            'Kevin Beckmann': [4, 4, 4, 5, null, 4],
+          }
+        },
+        handicap: {
+          estimated: false,
+          shooterStarts: { 'Brad Beckmann': 1, 'Tim Michael': 2, 'Dave Krupa': 3, 'Bill Curtis': 4, 'Glenn Esselman': 5, 'Kevin Beckmann': 6 },
+          scores: {
+            'Brad Beckmann': [4, 5, 5, 4, 4, null],
+            'Tim Michael': [null, 4, 5, 4, 4, 2],
+            'Dave Krupa': [1, null, 2, 2, 5, 1],
+            'Bill Curtis': [2, 4, null, 5, 4, 2],
+            'Glenn Esselman': [5, 4, 2, null, 3, 5],
+            'Kevin Beckmann': [2, 2, 5, 4, null, 3],
+          }
+        }
+      },
+      // W15: row order Tim, Brad, Dave, Bill, Glenn, Kevin (top to bottom) — starts Tim=1, Brad=2, Dave=3,
+      // Bill=4, Glenn=5, Kevin=6. Read via file-export + PIL crop 2026-08-05 (switching from live-window
+      // screenshot fixed real misreads). Every row checksummed cell-by-cell against printed card total,
+      // except Dave's Handicap row (see note below). Bill's Singles beer bird (Station 5, bird #10) and
+      // Brad's Handicap beer bird (Station 5, bird #17) both land exactly where the row-position formula
+      // predicts, independently confirming the row order. See SEASON_MASTER_2026.md Section 6c for detail.
+      W15: {
+        singles: {
+          estimated: false,
+          shooterStarts: { 'Tim Michael': 1, 'Brad Beckmann': 2, 'Dave Krupa': 3, 'Bill Curtis': 4, 'Glenn Esselman': 5, 'Kevin Beckmann': 6 },
+          scores: {
+            'Tim Michael': [5, 5, 3, 4, 4, null],
+            'Brad Beckmann': [null, 4, 4, 5, 5, 5],
+            'Dave Krupa': [3, null, 3, 4, 5, 2],
+            'Bill Curtis': [4, 4, null, 4, 5, 5],
+            'Glenn Esselman': [4, 5, 5, null, 5, 4],
+            'Kevin Beckmann': [3, 5, 5, 5, null, 5],
+          }
+        },
+        handicap: {
+          // Dave's row: marks count 7 (St1=2, St3=0, St4=1, St5=2, St6=2) running one higher than the card's
+          // own printed/official total of 6 — same marks/total conflict pattern as Kevin W3H/Dave W6H/Glenn
+          // W9S/Dave W12H. Per established precedent, official printed total (6) stays the score; marks-count
+          // array is logged here with the conflict noted, not force-summed to match.
+          estimated: false,
+          shooterStarts: { 'Tim Michael': 1, 'Brad Beckmann': 2, 'Dave Krupa': 3, 'Bill Curtis': 4, 'Glenn Esselman': 5, 'Kevin Beckmann': 6 },
+          scores: {
+            'Tim Michael': [4, 3, 5, 3, 2, null],
+            'Brad Beckmann': [null, 3, 3, 5, 4, 3],
+            'Dave Krupa': [2, null, 0, 1, 2, 2],
+            'Bill Curtis': [3, 5, null, 5, 4, 3],
+            'Glenn Esselman': [3, 5, 5, null, 3, 4],
+            'Kevin Beckmann': [4, 4, 3, 3, null, 4],
+          }
+        }
+      },
+    };
+
+    // ─── HELPERS ──────────────────────────────────────────────────────────
+    const getShooterWeekTotal = (shooterName, weekKey, type) => {
+      const week = SEASON_DATA[weekKey];
+      if (!week) return null;
+      const section = week[type];
+      if (!section || !section.scores) return null;
+      return section.scores[shooterName] ?? null;
+    };
+
+    const getShooterSeasonTotal = (shooterName, type) => {
+      let total = 0, count = 0;
+      Object.keys(SEASON_DATA).forEach(wk => {
+        const v = getShooterWeekTotal(shooterName, wk, type);
+        if (v !== null) { total += v; count++; }
+      });
+      return count > 0 ? { total, count, avg: (total / count).toFixed(1) } : null;
+    };
+
+    const getWeekTeamTotal = (weekKey, type) => {
+      const week = SEASON_DATA[weekKey];
+      if (!week) return null;
+      const section = week[type];
+      if (!section) return null;
+      if (section.teamTotal) return section.teamTotal;
+      if (!section.scores) return null;
+      return Object.values(section.scores).filter(v => v !== null && v !== undefined).reduce((s, v) => s + v, 0);
+    };
+
+    // Returns max possible team score for a given week/type (25 × present shooters)
+    const getWeekMaxScore = (weekKey, type) => {
+      const week = SEASON_DATA[weekKey];
+      if (!week) return 150;
+      const section = week[type];
+      if (!section) return 150;
+      if (section.teamTotal) return section.maxScore || 150; // manually entered totals; maxScore overrides default 150
+      if (!section.scores) return 150;
+      const present = Object.values(section.scores).filter(v => v !== null && v !== undefined).length;
+      return present * 25;
+    };
+
+    // Station helpers — stIdx is 0-based (0=St1 … 5=St6)
+    const getShooterStationScores = (shooterName, type) => {
+      // Returns array of {week, stIdx, val, estimated} for all weeks with station data
+      const results = [];
+      Object.entries(STATION_DATA).forEach(([wk, weekData]) => {
+        const sec = weekData[type];
+        if (!sec || !sec.scores || !sec.scores[shooterName]) return;
+        const arr = sec.scores[shooterName];
+        arr.forEach((val, stIdx) => {
+          if (val !== null) results.push({ week: wk, stIdx, val, estimated: !!sec.estimated });
+        });
+      });
+      return results;
+    };
+
+    const getStationAvg = (shooterName, stIdx, type) => {
+      let total = 0, count = 0;
+      Object.values(STATION_DATA).forEach(weekData => {
+        const sec = weekData[type];
+        if (!sec || !sec.scores || !sec.scores[shooterName]) return;
+        const val = sec.scores[shooterName][stIdx];
+        if (val !== null && val !== undefined) { total += val; count++; }
+      });
+      return count > 0 ? parseFloat((total / count).toFixed(2)) : null;
+    };
+
+    const heatColor = (avg) => {
+      if (avg === null) return 'var(--gray-dark)';
+      if (avg >= 4.5) return '#2ecc71';
+      if (avg >= 4.0) return '#a8e063';
+      if (avg >= 3.5) return '#f1c40f';
+      if (avg >= 3.0) return '#e67e22';
+      return '#e74c3c';
+    };
+
+
+    // ─── 3-WEEK ROLLING AVERAGE ─────────────────────────────────────────
+    const getLastNWeekAvg = (shooterName, type, n = 3) => {
+      const weeks = Object.keys(SEASON_DATA);
+      const recentWeeks = weeks.slice(-n);
+      let total = 0, count = 0;
+      recentWeeks.forEach(wk => {
+        const v = getShooterWeekTotal(shooterName, wk, type);
+        if (v !== null) { total += v; count++; }
+      });
+      return count > 0 ? { avg: parseFloat((total/count).toFixed(1)), count, weeks: recentWeeks } : null;
+    };
+
+    const getTrend = (current, season) => {
+      if (!current || !season) return null;
+      const diff = current - parseFloat(season);
+      if (diff > 0.3) return '▲';
+      if (diff < -0.3) return '▼';
+      return '—';
+    };
+
+    // ─── COMPONENTS ───────────────────────────────────────────────────────
+    function Overview() {
+      const completedWeeks = Object.keys(SEASON_DATA).length;
+      const singlesW14comp = 109; // W14 competition total after drop-lowest — LOSS vs The Hamilton (128)
+      const handicapW14comp = 93; // W14 competition total after drop-lowest — LOSS vs Kitchen Pass Charters (105)
+      const singlesW15comp = 123; // W15 competition total — LOSS vs Central United (125)
+      const handicapW15comp = 93; // W15 competition total — LOSS vs League Ave. (98)
+
+      return (
+        <div>
+          <div className="stat-cards">
+            <div className="stat-card">
+              <div className="stat-value">{completedWeeks}</div>
+              <div className="stat-label">Weeks Played</div>
+              <div className="stat-sub">Thru W15 confirmed</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value" style={{fontSize:'1.1rem', lineHeight:'1.4'}}>
+                <span className="record-w">6</span><span className="record-sep">–</span><span className="record-l">9</span>
+                <span style={{fontSize:'0.65rem', color:'var(--gray-dark)', display:'block', marginTop:2}}>Singles</span>
+                <span className="record-w">5</span><span className="record-sep">–</span><span className="record-l">10</span>
+                <span style={{fontSize:'0.65rem', color:'var(--gray-dark)', display:'block', marginTop:2}}>Handicap</span>
+              </div>
+              <div className="stat-label">Record thru W15</div>
+              <div className="stat-sub">Win-count cross-check vs Joe Bronson Team Standings, 8/9/2026</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">{singlesW15comp}</div>
+              <div className="stat-label">W15 Singles</div>
+              <div className="stat-sub">123 comp · LOSS vs Central United (#4, 125)</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">{handicapW15comp}</div>
+              <div className="stat-label">W15 Handicap</div>
+              <div className="stat-sub">93 comp · 21 yd · LOSS vs League Ave. (#6, 98)</div>
+            </div>
+          </div>
+
+          <h2 className="section-title">Season Snapshot</h2>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Week</th>
+                  <th>Date</th>
+                  <th>Singles</th>
+                  <th>Yd</th>
+                  <th>Handicap</th>
+                  <th>Yd</th>
+                  <th style={{fontSize:'0.72rem',whiteSpace:'nowrap'}}>Conditions</th>
+                  <th>Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(SEASON_DATA).map(([wk, data]) => {
+                  const sTotal = getWeekTeamTotal(wk, 'singles');
+                  const hTotal = getWeekTeamTotal(wk, 'handicap');
+                  const res = data.result;
+                  const sMax = getWeekMaxScore(wk, 'singles');
+                  const hMax = getWeekMaxScore(wk, 'handicap');
+                  return (
+                    <tr key={wk}>
+                      <td className="td-name">{wk}</td>
+                      <td>{data.date}</td>
+                      <td className="td-center">{sTotal ? `${sTotal}/${sMax}` : '—'}</td>
+                      <td className="td-center">{data.singles?.yardage}yd</td>
+                      <td className="td-center">{hTotal ? `${hTotal}/${hMax}` : '—'}</td>
+                      <td className="td-center">{data.handicap?.yardage}yd</td>
+                      <td className="td-center">
+                        {WEATHER_DATA[wk] ? (
+                          <div className="weather-cell">
+                            <div>{WEATHER_DATA[wk].icon} <span className="weather-temp">{WEATHER_DATA[wk].temp}°F</span></div>
+                            <div style={{fontSize:'0.67rem'}}>{WEATHER_DATA[wk].wind}</div>
+                            <div style={{fontSize:'0.65rem',color:'var(--gray-dark)'}}>{WEATHER_DATA[wk].conditions}</div>
+                          </div>
+                        ) : '—'}
+                      </td>
+                      <td className="td-center">
+                        {res === 'WIN'   ? <span className="badge badge-win">WIN</span>
+                         : res === 'LOSS'  ? <span className="badge badge-loss">LOSS</span>
+                         : res === 'SPLIT' ? (
+                           <span style={{display:'inline-flex',gap:2}}>
+                             <span className="badge badge-win" title={`Singles: ${data.singlesResult}`} style={{fontSize:'0.65rem',padding:'1px 5px'}}>
+                               S:{data.singlesResult === 'WIN' ? 'W' : 'L'}
+                             </span>
+                             <span className="badge badge-loss" title={`Handicap: ${data.handicapResult}`} style={{fontSize:'0.65rem',padding:'1px 5px'}}>
+                               H:{data.handicapResult === 'WIN' ? 'W' : 'L'}
+                             </span>
+                           </span>
+                         )
+                         : res === 'PENDING' ? <span className="badge badge-pending">Pending</span>
+                         : <span className="badge badge-pending">TBD</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="alert-info">
+            ✅ W1–W14 confirmed via win-count cross-check (official Joe Bronson Team Standings.pdf, 7/30/2026 snapshot — BTG's cumulative win total held at 6 in Singles Class A and held at 5 in Handicap Class B, reconciling exactly against 14 games played). Season: Singles 6–8 (W14 LOSS vs The Hamilton #8, 109–128), Handicap 5–9 (W14 LOSS vs Kitchen Pass Charters #7, 93–105). Opponent scores confirmed 2026-07-30 directly from Joe Bronson's Singles Class A.pdf / Handicap Class B.pdf per-team weekly cards. &nbsp;|&nbsp; ✅ Station-level data (STATION_DATA) synced thru W13 — every cell re-verified square-by-square 2026-07-26, checksummed against each card's printed total; hang check confirmed $0; W14 station detail complete in SEASON_MASTER_2026.md but not yet folded into this rolling window. 🍺 Beer Birds thru W14: 20 hits, all settled · 5 misses, all settled · $0 open debt (per Dave, confirmed 2026-07-29). &nbsp;|&nbsp; 📋 W15 (8/4): own scores confirmed — Singles 129/150, Handicap 99/150 (21yd) — opponent forecast Singles vs Team#4 Central United, Handicap vs Team#6 League Ave., but opponent SCORE and final W/L are PENDING, not yet received from the standings email; W14 record stands as the latest confirmed record until then. 🍺 Beer Birds thru W15: 22 hits, all settled · 5 misses, all settled · $0 open debt (per Dave, confirmed 2026-08-05).
+          </div>
+        </div>
+      );
+    }
+
+    const LEAGUE_STANDINGS = {
+      updatedThru: 'W15 (8/4/2026, standings snapshot 8/5/2026)',
+      singlesClassA: [
+        { place: 1,  team: 1,  name: 'The Hutch',                 wins: 10  },
+        { place: 1,  team: 4,  name: 'Central United',            wins: 10  },
+        { place: 3,  team: 2,  name: 'Worzalla Brothers',         wins: 8.5 },
+        { place: 4,  team: 6,  name: "Gillen's Gunners",          wins: 8   },
+        { place: 5,  team: 7,  name: 'Schooner Pub',              wins: 6.5 },
+        { place: 5,  team: 8,  name: 'The Hamilton',              wins: 6.5 },
+        { place: 5,  team: 9,  name: 'Clearshot Manufacturing',   wins: 6.5 },
+        { place: 8,  team: 5,  name: 'Between the Greens',        wins: 6,  btg: true },
+        { place: 8,  team: 3,  name: 'Gerken Specialty Machining',wins: 6   },
+        { place: 10, team: 10, name: 'League Ave.',               wins: 0   },
+      ],
+      handicapClassB: [
+        { place: 1,  team: 4,  name: 'Central United',            wins: 12.5 },
+        { place: 2,  team: 2,  name: 'Kitchen Pass Charters II',  wins: 8.5 },
+        { place: 2,  team: 8,  name: 'Vintage Shooters',          wins: 8.5 },
+        { place: 4,  team: 1,  name: "Maxwell's",                 wins: 7.5 },
+        { place: 5,  team: 7,  name: 'Kitchen Pass Charters',     wins: 7   },
+        { place: 6,  team: 5,  name: 'Between the Greens',        wins: 5,   btg: true },
+        { place: 7,  team: 3,  name: "Schieble's",                wins: 2   },
+        { place: 8,  team: 6,  name: 'League Ave.',               wins: 0   },
+        { place: 8,  team: 10, name: 'Open',                      wins: 0   },
+        { place: 8,  team: 9,  name: 'Open',                      wins: 0   },
+      ],
+    };
+
+    function Standings() {
+      const allWeeks = ['W1','W2','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12','W13','W14','W15'];
+
+      const StandingsTable = ({ data, title, btgNote }) => (
+        <div style={{marginBottom:'28px'}}>
+          <h3 style={{color:'var(--gold)',fontSize:'1rem',fontWeight:'bold',marginBottom:'8px',letterSpacing:'0.5px'}}>
+            {title}
+          </h3>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style={{width:'48px'}}>Place</th>
+                  <th style={{width:'60px'}}>Team #</th>
+                  <th>Team Name</th>
+                  <th style={{width:'60px'}}>Wins</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((row, i) => (
+                  <tr key={i} style={row.btg ? {background:'rgba(200,168,75,0.18)',fontWeight:'bold'} : {}}>
+                    <td className="td-center">{row.place}</td>
+                    <td className="td-center">{row.team}</td>
+                    <td className="td-name">
+                      {row.btg ? '🎯 ' : ''}{row.name}
+                      {row.btg && <span style={{marginLeft:'8px',fontSize:'0.72rem',color:'var(--gold)',fontWeight:'normal',fontStyle:'italic'}}>(us)</span>}
+                    </td>
+                    <td className="td-center" style={row.btg ? {color:'var(--gold)','fontSize':'1.05rem'} : {}}>{row.wins}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {btgNote && <p style={{fontSize:'0.78rem',color:'var(--gold-light)',marginTop:'6px',fontStyle:'italic'}}>{btgNote}</p>}
+        </div>
+      );
+
+      return (
+        <div>
+          <h2 className="section-title">🏆 League Standings — {LEAGUE_STANDINGS.updatedThru}</h2>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'24px',marginBottom:'8px'}}>
+            <StandingsTable
+              title="16 YD CLASS A — Singles"
+              data={LEAGUE_STANDINGS.singlesClassA}
+              btgNote="6–9 thru W15 (confirmed via win-count cross-check, standings snapshot 8/5/2026)"
+            />
+            <StandingsTable
+              title="HANDICAP CLASS B"
+              data={LEAGUE_STANDINGS.handicapClassB}
+              btgNote="5–10 thru W15 (confirmed via win-count cross-check, standings snapshot 8/5/2026)"
+            />
+          </div>
+
+          <h2 className="section-title">16-Yard Singles — Individual Scores</h2>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Shooter</th>
+                  <th>Cls</th>
+                  <th>W1</th><th>W2</th><th>W3</th><th>W4</th><th>W5</th><th>W6</th><th>W7</th><th>W8</th><th>W9</th><th>W10</th><th>W11</th><th>W12</th><th>W13</th><th>W14</th><th>W15</th>
+                  <th>Total</th>
+                  <th>Avg</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ROSTER.map(shooter => {
+                  const season = getShooterSeasonTotal(shooter.name, 'singles');
+                  return (
+                    <tr key={shooter.name}>
+                      <td className="td-name">{shooter.name}</td>
+                      <td className="td-center">
+                        <span className={`badge badge-${shooter.class.toLowerCase()}`}>{shooter.class}</span>
+                      </td>
+                      {allWeeks.map(wk => {
+                        const v = getShooterWeekTotal(shooter.name, wk, 'singles');
+                        const noIndividual = wk === 'W4' || wk === 'W8';
+                        const isZero = SEASON_DATA[wk]?.singles?.zeroStation === shooter.name;
+                        return (
+                          <td key={wk} className="td-center">
+                            {v === null
+                              ? (noIndividual ? '—' : <span className="badge badge-absent">abs</span>)
+                              : isZero
+                                ? <span style={{color:'var(--red)', fontWeight:'bold'}} title="Zero station this week">{v}⚠</span>
+                                : v}
+                          </td>
+                        );
+                      })}
+                      <td className="td-score">{season?.total ?? '—'}</td>
+                      <td className="td-center">{season?.avg ?? '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <p style={{fontSize:'0.75rem',color:'var(--red)',marginBottom:'12px'}}>⚠ = zero station recorded that week</p>
+          </div>
+
+          <h2 className="section-title">Handicap — Individual Scores</h2>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Shooter</th>
+                  <th>Cls</th>
+                  <th>W1 (22yd)</th><th>W2 (20yd)</th><th>W3 (25yd)</th><th>W4 (23yd)</th><th>W5 (21yd)</th><th>W6 (21yd)</th><th>W7 (22yd)</th><th>W8 (22yd)</th><th>W9 (22yd)</th><th>W10 (21yd)</th><th>W11 (21yd)</th><th>W12 (22yd)</th><th>W13 (22yd)</th><th>W14 (21yd)</th><th>W15 (21yd)</th>
+                  <th>Total</th>
+                  <th>Avg</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ROSTER.map(shooter => {
+                  const season = getShooterSeasonTotal(shooter.name, 'handicap');
+                  return (
+                    <tr key={shooter.name}>
+                      <td className="td-name">{shooter.name}</td>
+                      <td className="td-center">
+                        <span className={`badge badge-${shooter.class.toLowerCase()}`}>{shooter.class}</span>
+                      </td>
+                      {allWeeks.map(wk => {
+                        const v = getShooterWeekTotal(shooter.name, wk, 'handicap');
+                        const noIndividual = wk === 'W4' || wk === 'W8';
+                        return (
+                          <td key={wk} className="td-center">
+                            {v === null ? (noIndividual ? '—' : <span className="badge badge-absent">abs</span>) : v}
+                          </td>
+                        );
+                      })}
+                      <td className="td-score">{season?.total ?? '—'}</td>
+                      <td className="td-center">{season?.avg ?? '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <h2 className="section-title">Team Totals by Week</h2>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Format</th>
+                  {allWeeks.map(wk => <th key={wk} className="td-center">{wk}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {['singles','handicap'].map(type => (
+                  <tr key={type}>
+                    <td className="td-name">{type === 'singles' ? '16-Yd Singles' : 'Handicap'}</td>
+                    {allWeeks.map(wk => {
+                      const t = getWeekTeamTotal(wk, type);
+                      const denom = getWeekMaxScore(wk, type);
+                      return <td key={wk} className="td-center">{t ? `${t}/${denom}` : '—'}</td>;
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <h2 className="section-title">📈 3-Week Rolling Averages (W13–W15)</h2>
+          <p style={{fontSize:'0.78rem',color:'var(--gray-dark)',marginBottom:'12px'}}>
+            Last 3 weeks · compared to season average · ▲ hot streak · ▼ cooling off
+          </p>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Shooter</th>
+                  <th className="td-center">3-Wk Singles Avg</th>
+                  <th className="td-center">Season Singles Avg</th>
+                  <th className="td-center">Trend</th>
+                  <th className="td-center">3-Wk Hcp Avg</th>
+                  <th className="td-center">Season Hcp Avg</th>
+                  <th className="td-center">Trend</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ROSTER.map(shooter => {
+                  const s3 = getLastNWeekAvg(shooter.name, 'singles', 3);
+                  const h3 = getLastNWeekAvg(shooter.name, 'handicap', 3);
+                  const sSeason = getShooterSeasonTotal(shooter.name, 'singles');
+                  const hSeason = getShooterSeasonTotal(shooter.name, 'handicap');
+                  const sTrend = getTrend(s3?.avg, sSeason?.avg);
+                  const hTrend = getTrend(h3?.avg, hSeason?.avg);
+                  return (
+                    <tr key={shooter.name}>
+                      <td className="td-name">{shooter.name}</td>
+                      <td className="td-center three-wk-highlight" style={{fontWeight:'bold',fontSize:'1.05rem'}}>
+                        {s3?.avg ?? '—'}
+                      </td>
+                      <td className="td-center">{sSeason?.avg ?? '—'}</td>
+                      <td className={`td-center ${sTrend === '▲' ? 'avg-trend-up' : sTrend === '▼' ? 'avg-trend-dn' : 'avg-trend-eq'}`} style={{fontSize:'1.1rem'}}>
+                        {sTrend ?? '—'}
+                      </td>
+                      <td className="td-center three-wk-highlight" style={{fontWeight:'bold',fontSize:'1.05rem'}}>
+                        {h3?.avg ?? '—'}
+                      </td>
+                      <td className="td-center">{hSeason?.avg ?? '—'}</td>
+                      <td className={`td-center ${hTrend === '▲' ? 'avg-trend-up' : hTrend === '▼' ? 'avg-trend-dn' : 'avg-trend-eq'}`} style={{fontSize:'1.1rem'}}>
+                        {hTrend ?? '—'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    function Roster() {
+      return (
+        <div>
+          <h2 className="section-title">Team 5 — Between the Greens</h2>
+          <div className="roster-grid">
+            {ROSTER.map(shooter => {
+              const singles = getShooterSeasonTotal(shooter.name, 'singles');
+              const handicap = getShooterSeasonTotal(shooter.name, 'handicap');
+              return (
+                <div key={shooter.name} className="roster-card">
+                  <div className="roster-card-header">
+                    <h4>{shooter.name}</h4>
+                    <span className={`badge badge-${shooter.class.toLowerCase()}`}>{shooter.class}</span>
+                  </div>
+                  <div className="roster-card-body">
+                    <div className="roster-stat-row">
+                      <span className="roster-stat-label">Role</span>
+                      <span className="roster-stat-value">{shooter.role}</span>
+                    </div>
+                    <div className="roster-stat-row">
+                      <span className="roster-stat-label">Squad Spot</span>
+                      <span className="roster-stat-value">{shooter.spot}</span>
+                    </div>
+                    <div className="roster-stat-row">
+                      <span className="roster-stat-label">Singles Avg</span>
+                      <span className="roster-stat-value">{singles?.avg ?? 'N/A'}</span>
+                    </div>
+                    <div className="roster-stat-row">
+                      <span className="roster-stat-label">Handicap Avg</span>
+                      <span className="roster-stat-value">{handicap?.avg ?? 'N/A'}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    function StationAverages() {
+      const [type, setType] = React.useState('singles');
+      const stations = ['St1','St2','St3','St4','St5','St6'];
+      const shooterNames = ROSTER.map(r => r.name);
+
+      // Weeks that have data for this type
+      const weeksWithData = Object.entries(STATION_DATA)
+        .filter(([,wd]) => wd[type] !== null)
+        .map(([wk,wd]) => ({ wk, sec: wd[type] }));
+
+      const hasData = weeksWithData.length > 0;
+
+      return (
+        <div>
+          <h2 className="section-title">📊 Station Averages</h2>
+          <div style={{display:'flex',gap:'8px',marginBottom:'16px'}}>
+            {['singles','handicap'].map(t => (
+              <button key={t}
+                onClick={() => setType(t)}
+                className={`tab-btn${type === t ? ' active' : ''}`}
+                style={{fontSize:'0.85rem',padding:'6px 14px'}}>
+                {t === 'singles' ? '16-Yd Singles' : 'Handicap'}
+              </button>
+            ))}
+          </div>
+
+          {!hasData ? (
+            <div className="alert-info">No station data loaded for {type} yet.</div>
+          ) : (
+            <>
+              <div className="alert-info" style={{marginBottom:'12px',fontSize:'0.8rem'}}>
+                Heat map: <span style={{color:'#2ecc71'}}>■ ≥4.5</span>&nbsp;
+                <span style={{color:'#a8e063'}}>■ ≥4.0</span>&nbsp;
+                <span style={{color:'#f1c40f'}}>■ ≥3.5</span>&nbsp;
+                <span style={{color:'#e67e22'}}>■ ≥3.0</span>&nbsp;
+                <span style={{color:'#e74c3c'}}>■ &lt;3.0</span>&nbsp;
+                | ⚠️ = estimated reads
+                {weeksWithData.some(({sec}) => sec.estimated) && <span style={{color:'var(--orange)',marginLeft:'6px'}}>⚠️ some weeks have estimated reads</span>}
+              </div>
+
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Shooter</th>
+                      {stations.map(s => <th key={s} className="td-center">{s}</th>)}
+                      <th className="td-center">Weeks</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shooterNames.map(name => {
+                      const weeksShot = weeksWithData.filter(({sec}) => sec.scores[name]).length;
+                      return (
+                        <tr key={name}>
+                          <td className="td-name">{name}</td>
+                          {[0,1,2,3,4,5].map(stIdx => {
+                            const avg = getStationAvg(name, stIdx, type);
+                            const bg = heatColor(avg);
+                            return (
+                              <td key={stIdx} className="td-center" style={{
+                                background: avg !== null ? bg + '33' : 'transparent',
+                                color: avg !== null ? bg : 'var(--gray-dark)',
+                                fontWeight: avg !== null ? 'bold' : 'normal',
+                                fontSize: '0.9rem'
+                              }}>
+                                {avg !== null ? avg.toFixed(1) : '—'}
+                              </td>
+                            );
+                          })}
+                          <td className="td-center" style={{color:'var(--gray-dark)',fontSize:'0.8rem'}}>{weeksShot}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <h3 style={{color:'var(--orange)',fontSize:'1rem',marginTop:'24px',marginBottom:'8px'}}>Week-by-Week Station Breakdown</h3>
+              {weeksWithData.map(({wk, sec}) => (
+                <div key={wk} style={{marginBottom:'16px'}}>
+                  <div style={{color:'var(--gray-light)',fontWeight:'bold',marginBottom:'6px',fontSize:'0.9rem'}}>
+                    {wk} {sec.estimated ? <span style={{color:'var(--orange)',fontSize:'0.75rem'}}>⚠️ estimated</span> : ''}
+                  </div>
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Shooter</th>
+                          {stations.map(s => <th key={s} className="td-center" style={{fontSize:'0.8rem'}}>{s}</th>)}
+                          <th className="td-center">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {shooterNames.map(name => {
+                          const arr = sec.scores[name];
+                          if (!arr) return null;
+                          const total = arr.reduce((s,v) => s + (v||0), 0);
+                          return (
+                            <tr key={name}>
+                              <td className="td-name" style={{fontSize:'0.85rem'}}>{name}</td>
+                              {arr.map((v, i) => (
+                                <td key={i} className="td-center" style={{fontSize:'0.85rem',
+                                  color: v === null ? 'var(--gray-dark)' : v === 5 ? '#2ecc71' : v <= 2 ? '#e74c3c' : 'inherit'}}>
+                                  {v === null ? '—' : v}
+                                </td>
+                              ))}
+                              <td className="td-center" style={{fontWeight:'bold',fontSize:'0.85rem'}}>{total}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      );
+    }
+
+    function Schedule() {
+      const weeks = [
+        { n: 1, date: '4/28/2026', status: 'complete', result: 'SPLIT', note: 'S:L H:W' },
+        { n: 2, date: '5/5/2026',  status: 'complete', result: 'SPLIT', note: 'S:L H:W' },
+        { n: 3, date: '5/12/2026', status: 'complete', result: 'SPLIT', note: 'S:L H:W' },
+        { n: 4, date: '5/19/2026', status: 'complete', result: 'SPLIT', note: 'S:W H:L' },
+        { n: 5, date: '5/26/2026', status: 'complete', result: 'SPLIT', note: 'S:W H:L' },
+        { n: 6, date: '6/2/2026',  status: 'complete', result: 'WIN',   note: 'S:W H:W' },
+        { n: 7, date: '6/9/2026',  status: 'upcoming', result: '—' },
+        { n: 8, date: '6/16/2026', status: 'upcoming', result: '—' },
+        { n: 9, date: '6/23/2026', status: 'upcoming', result: '—' },
+        { n: 10, date: '6/30/2026', status: 'upcoming', result: '—' },
+        { n: 11, date: '7/7/2026',  status: 'upcoming', result: '—' },
+        { n: 12, date: '7/14/2026', status: 'upcoming', result: '—' },
+        { n: 13, date: '7/21/2026', status: 'upcoming', result: '—' },
+        { n: 14, date: '7/28/2026', status: 'upcoming', result: '—' },
+        { n: 15, date: '8/4/2026',  status: 'upcoming', result: '—' },
+        { n: 16, date: '8/11/2026', status: 'upcoming', result: '—' },
+        { n: 17, date: '8/18/2026', status: 'upcoming', result: '—' },
+        { n: 18, date: '8/25/2026', status: 'upcoming', result: '—' },
+        { n: 19, date: '9/1/2026',  status: 'upcoming', result: '—' },
+      ];
+
+      return (
+        <div>
+          <h2 className="section-title">2026 Season Schedule — Team 5</h2>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Week</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                {weeks.map(w => (
+                  <tr key={w.n} style={w.n === 7 ? {backgroundColor: '#fffbe6'} : {}}>
+                    <td className="td-name">W{w.n}</td>
+                    <td>{w.date}</td>
+                    <td>
+                      {w.status === 'complete' && <span className="badge badge-win">Complete</span>}
+                      {w.status === 'pending'  && <span className="badge badge-pending">Pending</span>}
+                      {w.status === 'upcoming' && <span style={{color: 'var(--gray-dark)', fontSize: '0.85rem'}}>Upcoming</span>}
+                    </td>
+                    <td className="td-center">
+                      {w.result === 'WIN'   && <span className="badge badge-win">WIN</span>}
+                      {w.result === 'LOSS'  && <span className="badge badge-loss">LOSS</span>}
+                      {w.result === 'SPLIT' && (
+                        <span style={{display:'inline-flex', gap:2}}>
+                          <span className={`badge ${w.note?.startsWith('S:W') ? 'badge-win' : 'badge-loss'}`} style={{fontSize:'0.65rem',padding:'1px 5px'}}>S:{w.note?.startsWith('S:W') ? 'W' : 'L'}</span>
+                          <span className={`badge ${w.note?.includes('H:W') ? 'badge-win' : 'badge-loss'}`} style={{fontSize:'0.65rem',padding:'1px 5px'}}>H:{w.note?.includes('H:W') ? 'W' : 'L'}</span>
+                        </span>
+                      )}
+                      {w.result === 'PENDING' && <span className="badge badge-pending">Pending</span>}
+                      {(w.result === 'TBD' || w.result === '—') && <span style={{color: 'var(--gray-dark)'}}>{w.result}</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p style={{fontSize:'0.8rem', color:'var(--gray-dark)', fontStyle:'italic'}}>
+            ⚠️ TUESDAY = SRPC / Between the Greens / Team 5 &nbsp;|&nbsp; THURSDAY = Rebellion Brewing. Never mix.
+          </p>
+        </div>
+      );
+    }
+
+    function BeerBirds() {
+      const shooters = ['Bill Curtis','Kevin Beckmann','Tim Michael','Brad Beckmann','Glenn Esselman','Dave Krupa'];
+
+      // ── W6+ debt from BEER_BIRDS ──
+      const debtMap = {};
+      shooters.forEach(s => { debtMap[s] = { earned: 0, owed: 0 }; });
+      BEER_BIRDS.forEach(b => {
+        if (b.result === 'HIT')      debtMap[b.shooter].earned++;
+        else if (b.result === 'MISS') debtMap[b.shooter].owed++;
+        // SETTLED: debt cleared, no increment
+      });
+
+      // ── Season miss totals ──
+      const missTotals = {};
+      shooters.forEach(s => {
+        let total = 0, weeks = 0;
+        Object.values(MISS_DATA).forEach(w => {
+          if (w[s] !== null && w[s] !== undefined) { total += w[s]; weeks++; }
+        });
+        missTotals[s] = { total, weeks };
+      });
+      const sortedByMiss = [...shooters].sort((a,b) => missTotals[a].total - missTotals[b].total);
+      const wkKeys = Object.keys(MISS_DATA);
+      const teamTotal = Object.values(missTotals).reduce((a,v) => a + v.total, 0);
+
+      return (
+        <div>
+          {/* ── DEBT BOARD ── */}
+          <h2 className="section-title">🍺 Beer Bird Debt Board — 2026 Season</h2>
+          <div className="alert-info" style={{marginBottom:'16px'}}>
+            <strong>Rules:</strong> HIT = club owes shooter a beer &nbsp;·&nbsp; MISS = shooter buys the whole team a round
+            <span style={{marginLeft:'12px',fontSize:'0.78rem',color:'var(--gray-dark)'}}>Formal tracking active from W6 forward</span>
+          </div>
+
+          <div className="debt-grid">
+            {shooters.map(s => {
+              const d = debtMap[s];
+              let cardClass = 'clear', statusClass = 'clear-txt', statusText = '✓ Clear';
+              if (d.earned > 0 && d.owed === 0) { cardClass = 'earned'; statusClass = 'earned-txt'; statusText = `🍺 ×${d.earned}`; }
+              else if (d.owed > 0)               { cardClass = 'owes';   statusClass = 'owes-txt';   statusText = `Owes ×${d.owed}`; }
+              const noteText = d.earned > 0 ? `Club owes ${d.earned} beer${d.earned>1?'s':''}` :
+                               d.owed  > 0 ? `Owes team ${d.owed} round${d.owed>1?'s':''}` :
+                               'Nothing owed';
+              const parts = s.split(' ');
+              return (
+                <div key={s} className={`debt-card ${cardClass}`}>
+                  <div className="debt-name">{parts[0]}<br/>{parts[1]}</div>
+                  <div className={`debt-status ${statusClass}`}>{statusText}</div>
+                  <div className="debt-note">{noteText}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── Summary stats ── */}
+          <div className="stat-row-sm">
+            <div className="stat-sm">
+              <div className="stat-sm-label">Most Misses W1–W8</div>
+              <div className="stat-sm-value">{sortedByMiss[sortedByMiss.length-1].split(' ')[0]}</div>
+              <div className="stat-sm-sub">{missTotals[sortedByMiss[sortedByMiss.length-1]].total} ○</div>
+            </div>
+            <div className="stat-sm">
+              <div className="stat-sm-label">Fewest Misses W1–W8</div>
+              <div className="stat-sm-value">{sortedByMiss[0].split(' ')[0]}</div>
+              <div className="stat-sm-sub">{missTotals[sortedByMiss[0]].total} ○</div>
+            </div>
+            <div className="stat-sm">
+              <div className="stat-sm-label">Team ○ Misses</div>
+              <div className="stat-sm-value">{teamTotal}</div>
+              <div className="stat-sm-sub">S+H combined</div>
+            </div>
+            <div className="stat-sm">
+              <div className="stat-sm-label">Club Owes (W6+)</div>
+              <div className="stat-sm-value">{BEER_BIRDS.filter(b=>b.result==='HIT').length} beers</div>
+              <div className="stat-sm-sub">{[...new Set(BEER_BIRDS.filter(b=>b.result==='HIT').map(b=>b.shooter.split(' ')[0]))].join(', ')}</div>
+            </div>
+            <div className="stat-sm">
+              <div className="stat-sm-label">Rounds Owed (W6+)</div>
+              <div className="stat-sm-value">{BEER_BIRDS.filter(b=>b.result==='MISS').length}</div>
+              <div className="stat-sm-sub">{BEER_BIRDS.filter(b=>b.result==='MISS').length === 0 ? 'Nobody owes' : 'round(s) owed'}</div>
+            </div>
+          </div>
+
+          {/* ── Miss Tracker ── */}
+          <h2 className="section-title" style={{marginTop:'24px'}}>○ Miss Tracker — W1–W8</h2>
+          <p style={{fontSize:'0.78rem',color:'var(--gray-dark)',marginBottom:'12px'}}>
+            Circle misses per shooter — Singles + Handicap combined · 50 max per week · null = absent
+          </p>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Shooter</th>
+                  {wkKeys.map(w => <th key={w} className="td-center">{w}</th>)}
+                  <th className="td-center">Total</th>
+                  <th className="td-center">Avg/Wk</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedByMiss.map(s => {
+                  const { total, weeks } = missTotals[s];
+                  return (
+                    <tr key={s}>
+                      <td className="td-name">{s}</td>
+                      {wkKeys.map(w => {
+                        const v = MISS_DATA[w][s];
+                        return (
+                          <td key={w} className="td-center" style={{
+                            fontSize:'0.85rem',
+                            background: v === null ? '#f8f8f4' : v >= 16 ? '#f7e0e0' : v <= 6 ? '#e8f4e8' : 'transparent',
+                            color: v === null ? 'var(--gray-dark)' : v >= 16 ? 'var(--red)' : v <= 6 ? 'var(--green-mid)' : 'inherit',
+                            fontWeight: v !== null && (v >= 16 || v <= 5) ? 'bold' : 'normal',
+                          }}>
+                            {v === null ? '—' : v}
+                          </td>
+                        );
+                      })}
+                      <td className="td-center" style={{fontWeight:'bold'}}>{total}</td>
+                      <td className="td-center" style={{color:'var(--gray-dark)',fontSize:'0.85rem'}}>
+                        {(total/weeks).toFixed(1)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* ── Event Log ── */}
+          <h2 className="section-title" style={{marginTop:'24px'}}>🎯 Beer Bird Event Log</h2>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Week</th>
+                  <th>Shooter</th>
+                  <th>Round</th>
+                  <th>Position</th>
+                  <th>Result</th>
+                  <th>Who Pays</th>
+                </tr>
+              </thead>
+              <tbody>
+                {BEER_BIRDS.length === 0 ? (
+                  <tr><td colSpan="6" className="td-center" style={{color:'var(--gray-dark)',fontStyle:'italic'}}>No beer birds recorded yet</td></tr>
+                ) : (
+                  BEER_BIRDS.map((b,i) => (
+                    <tr key={i}>
+                      <td className="td-name">{b.week}</td>
+                      <td>{b.shooter}</td>
+                      <td>{b.round}</td>
+                      <td className="td-center">{b.position}</td>
+                      <td className="td-center">
+                        <span style={{color:b.result==='HIT'||b.result==='SETTLED'?'var(--green-mid)':'var(--red)',fontWeight:'bold'}}>
+                          {b.result==='HIT' ? '✓ HIT' : b.result==='SETTLED' ? '✓ SETTLED' : '✗ MISS'}
+                        </span>
+                      </td>
+                      <td style={{fontSize:'0.85rem'}}>{b.note}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    function RoastBoard() {
+      return (
+        <div>
+          <h2 className="section-title">🔥 Roast Board — W1–W8</h2>
+          <div className="alert-info" style={{marginBottom:'16px'}}>
+            Data-driven. Season stats through W8. Derived from official scorecards only.
+            <span style={{marginLeft:'8px',fontSize:'0.78rem',color:'var(--gray-dark)'}}>No feelings were considered in the writing of this section.</span>
+          </div>
+          <div className="roast-grid">
+            {ROAST_DATA.map(r => (
+              <div key={r.name} className="roast-card">
+                <div className="roast-header">
+                  <div className="roast-name">{r.name}</div>
+                  <div className="roast-stats-txt">
+                    {r.stats.split(' · ').map((s,i) => <div key={i}>{s}</div>)}
+                  </div>
+                </div>
+                <div className="roast-body">{r.text}</div>
+                <div className="roast-tags">
+                  {r.tags.map((t,i) => (
+                    <span key={i} className={`rtag ${t.type==='gold'?'rtag-gold':t.type==='red'?'rtag-red':'rtag-def'}`}>
+                      {t.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function Admin({ adminMode, onLogin, onLogout }) {
+      const [pw, setPw] = useState('');
+      const [apiKey, setApiKey] = useState(() => localStorage.getItem('btg_api_key') || '');
+      const [uploadResult, setUploadResult] = useState('');
+      const [uploading, setUploading] = useState(false);
+      const fileRef = useRef(null);
+
+      const saveApiKey = (key) => {
+        setApiKey(key);
+        localStorage.setItem('btg_api_key', key);
+      };
+
+      const handleUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!apiKey) { alert('Set your Claude API key in Settings first.'); return; }
+
+        setUploading(true);
+        setUploadResult('Processing scorecard...');
+
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          const base64 = ev.target.result.split(',')[1];
+          try {
+            const res = await fetch('https://api.anthropic.com/v1/messages', {
+              method: 'POST',
+              headers: {
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01',
+                'content-type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: 'claude-opus-4-6',
+                max_tokens: 1024,
+                messages: [{
+                  role: 'user',
+                  content: [
+                    { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
+                    { type: 'text', text: `You are reading an SRPC Tuesday Night Trap League scorecard. Extract ALL shooter names, their station-by-station scores (stations 1-6, up to 5 birds each), and totals. Return valid JSON:
+{"class":"A or B","yardage":number,"shooters":[{"name":"string","scores":[s1,s2,s3,s4,s5],"total":number}]}
+Return ONLY the JSON. No markdown.` }
+                  ]
+                }]
+              })
+            });
+            const data = await res.json();
+            const text = data.content?.[0]?.text || 'No response';
+            setUploadResult(text);
+          } catch (err) {
+            setUploadResult('Error: ' + err.message);
+          }
+          setUploading(false);
+        };
+        reader.readAsDataURL(file);
+      };
+
+      if (!adminMode) {
+        return (
+          <div className="admin-panel">
+            <div className="admin-login">
+              <h3>🎯 Admin Access</h3>
+              <div className="form-group">
+                <label>Password</label>
+                <input
+                  type="password"
+                  value={pw}
+                  onChange={e => setPw(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && onLogin(pw)}
+                  placeholder="Enter password"
+                  autoFocus
+                />
+              </div>
+              <button className="btn btn-gold" onClick={() => onLogin(pw)} style={{width:'100%'}}>
+                Login
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="admin-panel">
+          <div className="alert-success">✓ Admin mode active</div>
+
+          <div className="admin-section">
+            <h4>📸 Upload Scorecard Photo</h4>
+            <div className="upload-zone" onClick={() => fileRef.current?.click()}>
+              {uploading ? '⏳ Processing with Claude AI...' : '📷 Click to upload scorecard photo'}
+              <br/><small style={{color:'var(--gray-dark)'}}>JPG, PNG supported · Claude reads the card automatically</small>
+            </div>
+            <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleUpload} />
+            {uploadResult && <div className="result-box">{uploadResult}</div>}
+          </div>
+
+          <div className="admin-section">
+            <h4>🔑 Claude API Key</h4>
+            <div className="form-group">
+              <label>API Key (stored locally, never transmitted except to Anthropic)</label>
+              <input
+                type="password"
+                value={apiKey}
+                onChange={e => saveApiKey(e.target.value)}
+                placeholder="sk-ant-..."
+              />
+            </div>
+            <small style={{color:'var(--gray-dark)'}}>Get your key at console.anthropic.com</small>
+          </div>
+
+          <button className="btn btn-danger btn-sm" onClick={onLogout}>Logout</button>
+        </div>
+      );
+    }
+
+    function KittyTracker() {
+      return (
+        <div>
+          <h2 className="section-title">💰 Kitty Tracker — Season 2026 (W4–W15)</h2>
+          <div className="alert-info" style={{marginBottom:'16px'}}>
+            Rolling-avg rule: $1 per bird under the shooter's floor(mean of up to 3 preceding non-absent weeks), per class, per week.
+            Hanging rule ($5, effective W10 forward): lone non-clean shooter in an otherwise-clean round.
+            Full recompute 2026-07-14, verified against confirmed W11 figures — source: SEASON_MASTER_2026.md Section 5.
+          </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Shooter</th>
+                  <th className="td-center">Singles (W4–11)</th>
+                  <th className="td-center">Handicap (W4–11)</th>
+                  <th className="td-center">Hangs</th>
+                  <th className="td-center">Total thru W12</th>
+                  <th className="td-center">W13 (rolling + tax)</th>
+                  <th className="td-center">Total thru W13</th>
+                  <th className="td-center">W14 (rolling)</th>
+                  <th className="td-center">Total thru W14</th>
+                  <th className="td-center">W15 (rolling)</th>
+                  <th className="td-center">Total thru W15</th>
+                </tr>
+              </thead>
+              <tbody>
+                {KITTY_DATA.map(row => (
+                  <tr key={row.name}>
+                    <td className="td-name">{row.name}</td>
+                    <td className="td-center">${row.singles}</td>
+                    <td className="td-center">${row.handicap}</td>
+                    <td className="td-center">${row.hangs}</td>
+                    <td className="td-center">${row.thruW12}</td>
+                    <td className="td-center">${row.w13}</td>
+                    <td className="td-center">${row.thruW12 + row.w13}</td>
+                    <td className="td-center">${row.w14}</td>
+                    <td className="td-center">${row.thruW12 + row.w13 + row.w14}</td>
+                    <td className="td-center">${row.w15}</td>
+                    <td className="td-center" style={{fontWeight:'bold',color:'var(--gold)'}}>${row.total}</td>
+                  </tr>
+                ))}
+                <tr style={{fontWeight:'bold'}}>
+                  <td className="td-name">TEAM TOTAL</td>
+                  <td className="td-center" colSpan="3"></td>
+                  <td className="td-center">${KITTY_TOTAL_THRU_W12}</td>
+                  <td className="td-center">${KITTY_W13_ADD}</td>
+                  <td className="td-center">${KITTY_TOTAL_THRU_W13}</td>
+                  <td className="td-center">${KITTY_W14_ADD}</td>
+                  <td className="td-center">${KITTY_TOTAL_THRU_W14}</td>
+                  <td className="td-center">${KITTY_W15_ADD}</td>
+                  <td className="td-center" style={{color:'var(--gold)',fontSize:'1.05rem'}}>${KITTY_TOTAL_THRU_W15}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p style={{fontSize:'0.78rem',color:'var(--gray-dark)',marginTop:'10px'}}>
+            Season leader: Dave $53 · Glenn $39 · Tim $32 — thru W15. Dave extends the season lead.
+            W15 additions: Dave $8 (Singles $1 + Handicap $7, new season-low Handicap night), Brad $2 (Handicap only),
+            Bill/Glenn/Tim/Kevin $0 (all met or beat their rolling floors). $0 hangs, no perfect-25 this week (Bill's 22
+            Singles was closest). W14 additions: Dave $12 (Singles $6 + Handicap $6, rough night on both cards), Kevin $4 (Singles $1 + Handicap $3),
+            Bill $2 (Handicap only), Brad $1 (Singles only), Tim $1 (Singles only), Glenn $0 (beat both rolling floors).
+            $0 hangs, no perfect-25 this week. W13 additions: Dave $20 (rolling $15 + $5 perfect-25 tax),
+            Tim $16 (rolling $11 + tax), Kevin/Brad/Glenn $5 (tax only, both beat their rolling floors), Bill $2 (rolling only,
+            exempt from his own perfect-25 tax). Bill Curtis shot the season's first
+            clean 25 (Singles, W13) — $5 tax from every other shooter, $25 to the pot.
+            🪢 CORRECTED 2026-07-18: Glenn Esselman HUNG twice on W12 Singles — Round 2 (T6–10) and Round 3 (T11–15) —
+            comparing round-by-round across both W12 cards (Kevin/Bill/Tim/Brad live 7/14, Dave/Glenn shot-ahead 7/13):
+            every other shooter went clean both rounds, Glenn missed both. $10 kitty, not $0 — corrects an earlier
+            same-week miss that compared by physical station number instead of by round number, which is the
+            established convention (see the W10 Kevin hang precedent, called the same way).
+          </p>
+        </div>
+      );
+    }
+
+    // ─── APP ROOT ─────────────────────────────────────────────────────────
+    function App() {
+      const validTabs = ['overview','standings','roster','station','kitty','schedule','beerbirds','roast','admin'];
+      const hashTab = window.location.hash.replace('#','');
+      const [tab, setTab] = useState(validTabs.includes(hashTab) ? hashTab : 'overview');
+      useEffect(() => { window.location.hash = tab; }, [tab]);
+      const [adminMode, setAdminMode] = useState(false);
+
+      const handleLogin = (pw) => {
+        if (pw === 'greens2026') {
+          setAdminMode(true);
+          setTab('admin');
+        } else {
+          alert('Wrong password');
+        }
+      };
+
+      const TABS = [
+        { key: 'overview',   label: 'Overview'        },
+        { key: 'standings',  label: 'Standings'       },
+        { key: 'roster',     label: 'Roster'          },
+        { key: 'station',    label: '📊 Station Avgs' },
+        { key: 'kitty',      label: '💰 Kitty'        },
+        { key: 'schedule',   label: 'Schedule'        },
+        { key: 'beerbirds',  label: '🍺 Beer Birds'   },
+        { key: 'roast',      label: '🔥 Roast Board'  },
+        { key: 'admin',      label: adminMode ? '⚙ Admin' : 'Admin' },
+      ];
+
+      return (
+        <div>
+          <header className="app-header">
+            <div className="header-badge">🎯</div>
+            <div className="header-text">
+              <h1>Between the Greens</h1>
+              <p>SRPC Tuesday Night Trap League · Team 5</p>
+            </div>
+            <div className="header-right">
+              <div className="season-badge">2026 SEASON</div>
+              {adminMode && <div className="admin-indicator">Admin Active</div>}
+            </div>
+          </header>
+
+          <nav className="tab-nav">
+            {TABS.map(t => (
+              <button
+                key={t.key}
+                className={`tab-btn ${tab === t.key ? 'active' : ''}`}
+                onClick={() => setTab(t.key)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </nav>
+
+          <main className="main-content">
+            {tab === 'overview'  && <Overview />}
+            {tab === 'standings' && <Standings />}
+            {tab === 'roster'    && <Roster />}
+            {tab === 'station'   && <StationAverages />}
+            {tab === 'kitty'     && <KittyTracker />}
+            {tab === 'schedule'  && <Schedule />}
+            {tab === 'beerbirds' && <BeerBirds />}
+            {tab === 'roast'     && <RoastBoard />}
+            {tab === 'admin'     && <Admin adminMode={adminMode} onLogin={handleLogin} onLogout={() => setAdminMode(false)} />}
+          </main>
+
+          <footer className="app-footer">
+            Between the Greens · SRPC Tuesday Night Trap · Team 5 · Captain: Brad Beckmann
+            &nbsp;|&nbsp; Built with Claude
+          </footer>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
